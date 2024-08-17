@@ -4,10 +4,11 @@ from typing import Annotated, List
 
 from fastapi import Depends, HTTPException, status, Query
 from pydantic_mongo import PydanticObjectId
+from datetime import datetime
 
 
 from ..config import COLLECTIONS, db
-from ..models import Product, ProductFromDB
+from ..models import Product, ProductFromDB, UpdateProductData
 
 
 class ProductsService:
@@ -40,10 +41,12 @@ class ProductsService:
         return cls.collection.insert_one(product.model_dump())
         
     @classmethod
-    def update_one(cls, id: PydanticObjectId, product_data: Product):
+    def update_one(cls, id: PydanticObjectId, product_data: UpdateProductData):
+        
+        product_data.modified_at = datetime.now()
         return cls.collection.find_one_and_update(
             {"_id": id},
-            {"$set": product_data.model_dump()},
+            {"$set": product_data.model_dump(exclude_unset=True)},
             return_document=True
         )
     

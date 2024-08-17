@@ -10,7 +10,7 @@ from pydantic_mongo import PydanticObjectId
 from pydantic import EmailStr
 
 from ..config import COLLECTIONS, db, access_token_exp, SECRET_KEY
-from ..models import CreationUser, LoginUser, UserFromDB, UserFromDBWithHash
+from ..models import CreationUser, LoginUser, UserFromDB, PublicUserFromDB, UserFromDBWithHash
 
 access_security = JwtAccessBearer(secret_key=SECRET_KEY, auto_error=True)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -87,14 +87,14 @@ class UsersService:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
             )
-        userdata = UserFromDB.model_validate(existing_user).model_dump()
+        userdata = PublicUserFromDB.model_validate(existing_user).model_dump()
         access_token = access_security.create_access_token(
             subject=userdata, expires_delta=access_token_exp
         )
         access_security.set_access_cookie(response, access_token)
 
         return {"access_token": access_token}
-
+    
 
 UsersServiceDependency = Annotated[UsersService, Depends()]
 AuthCredentials = Annotated[JwtAuthorizationCredentials, Security(access_security)]

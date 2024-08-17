@@ -2,6 +2,7 @@
 __all__ = [
     "BaseUser",
     "LoginUser",
+    "PublicUserFromDB",
     "UserFromDB",
     "UserFromDBWithHash",
     "CreationUser",
@@ -33,14 +34,7 @@ class BaseUser(BaseModel):
     role: Role = Field(default=Role.ADMIN)
     email: EmailStr
     image: Optional[str] = None
-    address: Optional[List[Adress]] = None
-    created_at: datetime = Field(default_factory=datetime.now)
-    
-    class Config:
-        json_encoders = {
-            datetime: lambda dt: dt.isoformat(),
-        }
-    
+    address: Optional[List[Adress]] = None   
     
 class LoginUser(BaseModel):
     username: str
@@ -48,11 +42,19 @@ class LoginUser(BaseModel):
 
 class CreationUser(BaseUser):
     password: str
+    created_at: datetime = Field(default_factory=datetime.now)
+    
+class PublicUserFromDB(BaseUser):
+    id: PydanticObjectId
     
 class UserFromDB(BaseUser):
-    id: PydanticObjectId
+    id: PydanticObjectId = Field(alias="_id")
+    created_at: Optional[datetime] = None
+    modified_at: Optional[datetime] = None
    
 class UserFromDBWithHash(BaseUser):
     id: PydanticObjectId = Field(alias="_id")
     hash_password: str
+    created_at: Optional[datetime] = None
+    modified_at: Optional[datetime] = None
   
