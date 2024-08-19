@@ -4,15 +4,16 @@ __all__ = ["UsersServiceDependency", "AuthServiceDependency", "AuthCredentials"]
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Response, Security, status
-from fastapi_jwt import JwtAccessBearer, JwtAuthorizationCredentials
+from fastapi_jwt import JwtAccessBearerCookie, JwtAuthorizationCredentials, JwtRefreshBearer
 from passlib.context import CryptContext
 from pydantic_mongo import PydanticObjectId
 from pydantic import EmailStr
 
-from ..config import COLLECTIONS, db, access_token_exp, SECRET_KEY
+from ..config import COLLECTIONS, db, access_token_exp, refresh_token_exp, SECRET_KEY, REFRESH_KEY
 from ..models import CreationUser, LoginUser, UserFromDB, PublicUserFromDB, UserFromDBWithHash
 
-access_security = JwtAccessBearer(secret_key=SECRET_KEY, auto_error=True)
+access_security = JwtAccessBearerCookie(secret_key=SECRET_KEY, access_expires_delta=access_token_exp, auto_error=True)
+refresh_security = JwtRefreshBearer(secret_key=REFRESH_KEY, auto_error=True)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -87,14 +88,28 @@ class UsersService:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
             )
-        userdata = PublicUserFromDB.model_validate(existing_user).model_dump()
+        userdata: dict = PublicUserFromDB.model_validate(existing_user).model_dump()
         access_token = access_security.create_access_token(
-            subject=userdata, expires_delta=access_token_exp
+            subject=userdata
+        )
+        refresh_token = refresh_security.create_refresh_token(
+            subject=userdata, expires_delta=refresh_token_exp
         )
         access_security.set_access_cookie(response, access_token)
+        refresh_security.set_refresh_cookie(response, refresh_token)
 
-        return {"access_token": access_token}
+        return {"access_token": access_token, "refresh_token": refresh_token}
     
+    @classmethod
+    def refresh_access_token(cls, response: Response, refresh_credentials: JwtAuthorizationCredentials = Security(refresh_security)):
+        access_token = access_security.create_access_token(subject=refresh_credentials.subject)
+        refresh_token = refresh_security.create_refresh_token(subject=refresh_credentials.subject, expires_delta=refresh_token_exp)
+
+        access_security.set_access_cookie(response, access_token)
+        refresh_security.set_refresh_cookie(response, refresh_token)
+        
+        return {"access_token": access_token, "refresh_token": refresh_token}
+        
 
 UsersServiceDependency = Annotated[UsersService, Depends()]
 AuthCredentials = Annotated[JwtAuthorizationCredentials, Security(access_security)]

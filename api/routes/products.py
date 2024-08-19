@@ -26,36 +26,44 @@ async def get_product(id: PydanticObjectId, products: ProductsServiceDependency)
 
 @products_router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_product(product: Product, products:  ProductsServiceDependency, auth: AuthServiceDependency):
-    assert (
-        auth.is_admin or auth.is_staff
-    ), "Only admins and sellers can create products"
-    result = products.create_one(product)
-    return {"result message": f"Product {product.name} created with id: {result.inserted_id}"}
+    if auth.is_admin or auth.is_staff:
+        result = products.create_one(product)
+        return {"result message": f"Product {product.name} created with id: {result.inserted_id}"}
+    return JSONResponse(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        content={"error": "Only admins and sellers can create products"}
+    )
 
 @products_router.patch("/{id}")
 async def update_product(id: PydanticObjectId, product_data: UpdateProductData, products: ProductsServiceDependency, auth: AuthServiceDependency):
-    assert (
-        auth.is_admin or auth.is_staff
-    ), "Only admins and sellers can modify products"
-    result = products.update_one(id, product_data) 
-    if result:
-        return {"result message": "Product succesfully updated",
-                "updated product": ProductFromDB.model_validate(result).model_dump()}
-    else:
-        return JSONResponse(
-                status_code=status.HTTP_404_NOT_FOUND,
-                content={"error": f"Product with id: {id} was not found."},
-            )
+    if auth.is_admin or auth.is_staff:
+        result = products.update_one(id, product_data) 
+        if result:
+            return {"result message": "Product succesfully updated",
+                    "updated product": ProductFromDB.model_validate(result).model_dump()}
+        else:
+            return JSONResponse(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    content={"error": f"Product with id: {id} was not found."},
+                )
+    return JSONResponse(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        content={"error": "Only admins and sellers can modify products"}
+    )
     
 @products_router.delete("/{id}")
 async def delete_product(id: PydanticObjectId, products: ProductsServiceDependency, auth: AuthServiceDependency):
-    assert (auth.is_admin), "Only admins can delete products"
-    result = products.delete_one(id)
-    if result:
-        return {"result message": "Product succesfully deleted",
-                "deleted product": ProductFromDB.model_validate(result).model_dump()}
-    else:
-        return JSONResponse(
-                status_code=status.HTTP_404_NOT_FOUND,
-                content={"error": f"Product with id: {id} was not found."},
-            )
+    if auth.is_admin:
+        result = products.delete_one(id)
+        if result:
+            return {"result message": "Product succesfully deleted",
+                    "deleted product": ProductFromDB.model_validate(result).model_dump()}
+        else:
+            return JSONResponse(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    content={"error": f"Product with id: {id} was not found."},
+                )
+    return JSONResponse(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    content={"error": "Only admins can delete products"}
+                )

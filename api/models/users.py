@@ -31,7 +31,7 @@ class BaseUser(BaseModel):
     username: str
     firstname: Optional[str] = None
     lastname: Optional[str] = None
-    role: Role = Field(default=Role.ADMIN)
+    role: Role = Field(default=Role.CUSTOMER)
     email: EmailStr
     image: Optional[str] = None
     address: Optional[List[Adress]] = None   

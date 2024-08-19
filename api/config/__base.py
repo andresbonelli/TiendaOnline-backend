@@ -1,4 +1,4 @@
-__all__ = ["MONGODB_URI", "logger", "SECRET_KEY"]
+__all__ = ["MONGODB_URI", "logger", "SECRET_KEY", "REFRESH_KEY"]
 
 import logging
 import os
@@ -13,6 +13,7 @@ if not MONGODB_URI:
     raise Exception("MongoDB connection string not found")
 
 SECRET_KEY = os.getenv("SECRET_KEY")
+REFRESH_KEY= os.getenv("REFRESH_KEY")
 
 logger = logging.getLogger("uvicorn")
 # logger.setLevel(logging.DEBUG)

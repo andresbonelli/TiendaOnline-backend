@@ -28,3 +28,10 @@ async def login_with_cookie(
 @auth_router.get("/authenticated_user")
 async def read_current_user(credentials: AuthCredentials):
     return credentials.subject
+
+@auth_router.post("/refresh")
+async def refresh_credentials(response: Response, credentials: AuthCredentials, auth: UsersServiceDependency):
+    return auth.refresh_access_token(response, credentials)
+
+
+    
