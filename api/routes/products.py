@@ -28,15 +28,21 @@ async def get_product(id: PydanticObjectId, products: ProductsServiceDependency)
 @products_router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_product(product: Product, products:  ProductsServiceDependency, security: SecurityDependency):
     security.is_staff_or_raise
-    inserted_id = products.create_one(product)
-    return {"result message": f"Product created with id: {inserted_id}"}
+    result = products.create_one(product)
+    if result.acknowledged:
+        return {"result message": f"Product created with id: {result.inserted_id}"}
+    else:
+        return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": f"An unexpected error ocurred while creating product"},
+            )
 
 @products_router.put("/{id}")
 async def update_product(id: PydanticObjectId, product_data: UpdationProduct, products: ProductsServiceDependency):
     result = products.update_one(id, product_data) 
     if result:
         return {"result message": "Product succesfully updated",
-                "updated product": ProductFromDB.model_validate(result).model_dump()}
+                "updated product": result}
     else:
         return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -50,7 +56,7 @@ async def delete_product(id: PydanticObjectId, products: ProductsServiceDependen
     result = products.delete_one(id)
     if result:
         return {"result message": "Product succesfully deleted",
-                "deleted product": ProductFromDB.model_validate(result).model_dump()}
+                "deleted product": result}
     else:
         return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,

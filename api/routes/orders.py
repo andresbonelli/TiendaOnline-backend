@@ -1,6 +1,7 @@
 __all__ = ["orders_router"]
 
-from fastapi import APIRouter
+from fastapi import APIRouter, status
+from fastapi.responses import JSONResponse
 from pydantic_mongo import PydanticObjectId
 
 from ..__common_deps import QueryParams, QueryParamsDependency
@@ -33,7 +34,8 @@ def get_orders_by_seller_id(
         auth_user_id == id or security.auth_user_role == "admin"
     ), "User does not have access to this orders"
 
-    params = QueryParams(filter=f"seller_id={id}")
+    # BUG: Order does not have "staff_id" !!!
+    params = QueryParams(filter=f"staff_id={id}")
     return orders.get_all(params)
 
 
@@ -46,7 +48,7 @@ def get_orders_by_customer_id(
         auth_user_id == id or security.auth_user_role == "admin"
     ), "User does not have access to this orders"
 
-    params = QueryParams(filter=f"custommer_id={id}")
+    params = QueryParams(filter=f"customer_id={id}")
     return orders.get_all(params)
 
 
@@ -54,8 +56,9 @@ def get_orders_by_customer_id(
 def get_orders_by_product_id(
     id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
 ):
-    auth_user_id = security.auth_user_id if security.auth_user_role != "admin" else None
-    return orders.get_one(id, authorized_user_id=auth_user_id)
+    auth_user_id = security.auth_user_id
+    params = QueryParams(filter=f"product_id={id}")
+    return orders.get_all(params)
 
 
 @orders_router.post("/")
@@ -70,8 +73,13 @@ def create_order(
     assert product.get("quantity", 0) >= order.quantity, "Product is out of stock"
     products.update_one(
         order.product_id,
-        UpdationProduct(quantity=product["quantity"] - order.quantity),
+        UpdationProduct(stock=product["stock"] - order.quantity),
     )
     result = orders.create_one(order)
-    if result:
-        return {"result message": f"Order created with id: {result}"}
+    if result.acknowledged:
+        return {"result message": f"Order created with id: {result.inserted_id}"}
+    else:
+        return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": f"An unexpected error ocurred while creating product"},
+            )

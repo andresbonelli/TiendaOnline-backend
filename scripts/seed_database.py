@@ -29,8 +29,8 @@ users_ids = []
 for user in users:
     hash_password = AuthService.get_password_hash(user["password"])
     insertion_user = CreationUser.model_validate(user)
-    result_id = UsersService.create_one(insertion_user, hash_password=hash_password).inserted_id
-    users_ids.append(result_id)
+    result = UsersService.create_one(insertion_user, hash_password=hash_password)
+    users_ids.append(result.inserted_id)
 
 # Create some products
 
@@ -112,8 +112,8 @@ print("Creating products...")
 product_ids = []
 for product in products:
     insertion_product = Product.model_validate(product)
-    result_id = ProductsService.create_one(insertion_product)
-    product_ids.append(result_id)
+    result = ProductsService.create_one(insertion_product)
+    product_ids.append(result.inserted_id)
 
 # Create some orders
 

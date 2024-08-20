@@ -8,7 +8,7 @@ from pydantic_mongo import PydanticObjectId
 
 from ..__common_deps import QueryParamsDependency
 from ..config import COLLECTIONS, db
-from ..models import Order, StoredOrder
+from ..models import Order, OrderFromDB
 
 
 class OrdersService:
@@ -17,21 +17,20 @@ class OrdersService:
 
     @classmethod
     def create_one(cls, order: Order):
-        document = cls.collection.insert_one(order.model_dump())
-        if document:
-            return str(document.inserted_id)
-        return None
+        return cls.collection.insert_one(order.model_dump()) or None
+
 
     @classmethod
     def get_all(cls, params: QueryParamsDependency):
         return [
-            StoredOrder.model_validate(order).model_dump()
+            OrderFromDB.model_validate(order).model_dump()
             for order in params.query_collection(cls.collection)
         ]
 
     @classmethod
     def get_one(cls, id: PydanticObjectId, authorized_user_id: PydanticObjectId | None):
         filter_criteria: dict = {"_id": id}
+        # WARNING: Filter criteria is always "order" id !!! 
         if authorized_user_id:
             filter_criteria.update(
                 {
@@ -42,8 +41,8 @@ class OrdersService:
                 }
             )
 
-        if db_order := cls.collection.find_one(filter_criteria):
-            return StoredOrder.model_validate(db_order).model_dump()
+        if order_from_db := cls.collection.find_one(filter_criteria):
+            return OrderFromDB.model_validate(order_from_db).model_dump()
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Order not found"

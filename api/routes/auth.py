@@ -38,8 +38,8 @@ async def read_current_user(security: SecurityDependency):
     )
 
 @auth_router.post("/refresh")
-async def refresh_credentials(response: Response, credentials, auth: AuthServiceDependency):
-    return auth.refresh_access_token(response, credentials)
+async def refresh_credentials(response: Response, auth: AuthServiceDependency):
+    return auth.refresh_access_token(response)
 
 
     

@@ -5,6 +5,8 @@ from typing import Annotated, Literal
 
 from fastapi import Depends
 from pymongo.collection import Collection
+from pymongo.cursor import Cursor
+
 
 
 @dataclass
@@ -15,7 +17,7 @@ class QueryParams:
     sort_by: str = "_id"
     sort_dir: Literal["asc", "desc"] = "asc"
 
-    def query_collection(self, collection: Collection):
+    def query_collection(self, collection: Collection) -> Cursor:
         filter_dict = (
             {
                 k.strip(): (

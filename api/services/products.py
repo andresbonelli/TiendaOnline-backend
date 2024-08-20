@@ -26,10 +26,8 @@ class ProductsService:
     def create_one(cls, product: Product):
         insertion_product = product.model_dump(exclude_unset=True)
         insertion_product.update(created_at=datetime.now())
-        result = cls.collection.insert_one(insertion_product)
-        if result:
-            return str(result.inserted_id)
-        return None
+        return cls.collection.insert_one(insertion_product) or None
+    
     
     @classmethod
     def get_all(cls, params: QueryParamsDependency):

@@ -18,6 +18,11 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 AuthCredentials = Annotated[JwtAuthorizationCredentials, Security(access_security)]
 RefreshCredentials = Annotated[JwtAuthorizationCredentials, Security(refresh_security)]
 
+
+
+
+
+
 class AuthService:  
     @staticmethod
     def verify_password(plain_password, hashed_password):
@@ -51,13 +56,13 @@ class AuthService:
         return {"access_token": access_token, "refresh_token": refresh_token}
 
     @classmethod
-    def refresh_access_token(cls, response: Response, refresh_credentials: RefreshCredentials):
-        access_token = access_security.create_access_token(subject=refresh_credentials.subject)
-        refresh_token = refresh_security.create_refresh_token(subject=refresh_credentials.subject, expires_delta=refresh_token_exp)
-        
+    def refresh_access_token(cls, response: Response, refresh: RefreshCredentials):
+        access_token = access_security.create_access_token(subject=refresh.subject)
+        refresh_token = refresh_security.create_refresh_token(subject=refresh.subject, expires_delta=refresh_token_exp)
+  
         access_security.set_access_cookie(response, access_token)
         refresh_security.set_refresh_cookie(response, refresh_token)
-        
+  
         return {"access_token": access_token, "refresh_token": refresh_token}
 
 class SecurityService:
@@ -65,8 +70,10 @@ class SecurityService:
         self.auth_user_id = credentials.subject.get("id")
         self.auth_user_name = credentials.subject.get("name")
         self.auth_user_email = credentials.subject.get("email")
-        self.auth_user_role = credentials.subject.get("role")   
-
+        self.auth_user_role = credentials.subject.get("role")  
+        
+        
+        
     @property
     def is_admin(self):
         return self.auth_user_role == "admin"
@@ -94,7 +101,6 @@ class SecurityService:
     def is_customer_or_raise(self):
         role = self.auth_user_role
         assert role == "admin" or role == "customer", "User does not have customer role"
-
 
 AuthServiceDependency = Annotated[AuthService, Depends()]
 SecurityDependency = Annotated[SecurityService, Depends()]

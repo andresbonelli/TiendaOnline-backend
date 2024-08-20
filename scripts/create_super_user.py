@@ -26,4 +26,4 @@ hash_password = AuthService.get_password_hash(insertion_user.password)
 print("Creating super user...")
 result = UsersService.create_one(insertion_user, hash_password=hash_password, make_it_admin=True)
 
-print(f"Super user: {data["username"]} created with id: {result}")
+print(f"Super user: {data["username"]} created with id: {result.inserted_id}")
