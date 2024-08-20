@@ -86,6 +86,7 @@ class UsersService:
 
     @classmethod
     def update_one(cls, id: PydanticObjectId, user: UpdationUser):
+        user.modified_at = datetime.now()
         print(user.model_dump())
         document = cls.collection.find_one_and_update(
             {"_id": id},

@@ -5,7 +5,8 @@ from pymongo.server_api import ServerApi
 
 from .__base import MONGODB_URI, logger
 
-COLLECTIONS = ["products", "users"]
+DB_NAME = "bootcamp_eCommerce_app"
+COLLECTIONS = ["products", "users", "orders"]
 
 # Create a new client and connect to the server
 client = MongoClient(MONGODB_URI, server_api=ServerApi("1"))
@@ -19,7 +20,7 @@ except Exception as e:
     print(e)
 
 
-db = client.bootcamp_eCommerce_app
+db = client[DB_NAME]
 
 
 def create_collections():
@@ -35,4 +36,4 @@ def create_collections():
 
 
 # Create Collections (optional)
-create_collections()
+# create_collections()
