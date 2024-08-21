@@ -1,11 +1,11 @@
 
 __all__ = [
     "BaseUser",
-    "LoginUser",
+    "UserLoginData",
     "PublicUserFromDB",
     "PrivateUserFromDB",
-    "CreationUser",
-    "UpdationUser",
+    "UserRegisterData",
+    "UserUpdateData",
 ]
 
 from pydantic import BaseModel, Field, EmailStr, AliasChoices
@@ -24,13 +24,13 @@ class Role(str, Enum):
     CUSTOMER = "customer"
     STAFF = "staff"
 
-class Adress(BaseModel):
-    adress_street_no: Optional[str] = None
-    adress_street_name: Optional[str] = None
-    adress_city: Optional[str] = None
-    adress_state: Optional[str] = None
-    adress_country_code: Optional[CountryCode] = None
-    adress_postal_code: Optional[str] = None
+class Address(BaseModel):
+    address_street_no: str | None = None
+    address_street_name: str | None = None
+    address_city: str | None = None
+    address_state: str | None = None
+    address_country_code: CountryCode | None = None
+    address_postal_code: str | None = None
     
 class BaseUser(BaseModel):
     username: str
@@ -39,33 +39,31 @@ class BaseUser(BaseModel):
     firstname: Optional[str] = None
     lastname: Optional[str] = None
     image: Optional[str] = None
-    address: Optional[List[Adress]] = None   
+    address: Optional[List[Address]] = None   
 
-class UpdationUser(BaseUser):
-    username: str = Field(default=None)
-    role: Role = Field(default=None)
-    email: EmailStr = Field(default=None)
-    image: str | None = Field(default=None)
-    modified_at: datetime = Field(default_factory=datetime.now)
+class UserUpdateData(BaseUser):
+    username: str = None
+    role: CreationRole = Field(default=CreationRole.CUSTOMER)
+    email: EmailStr = None
+    image: str | None = None
 
-class CreationUser(BaseUser):
-    role: CreationRole = CreationRole.CUSTOMER
-    password: str
-    created_at: datetime = Field(default_factory=datetime.now)
+class UserRegisterData(BaseUser):
+    role: CreationRole = Field(default=CreationRole.CUSTOMER)
+    password: str 
     
-class LoginUser(BaseModel):
+class UserLoginData(BaseModel):
     username: str
     password: str
 
 class PublicUserFromDB(BaseUser):
     id: PydanticObjectId = Field(validation_alias=AliasChoices("_id", "id"))
-    created_at: Optional[datetime] = None
-    modified_at: Optional[datetime] = None
+    created_at: datetime = None
+    modified_at: datetime | None = None
     
 class PrivateUserFromDB(BaseUser):
     id: PydanticObjectId = Field(alias="_id")
     hash_password: str
-    created_at: Optional[datetime] = None
+    created_at: datetime = None
     modified_at: Optional[datetime] = None
    
 

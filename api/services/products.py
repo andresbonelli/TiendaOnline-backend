@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 from ..config import COLLECTIONS, db
-from ..models import Product, ProductFromDB, UpdationProduct
+from ..models import BaseProduct, ProductCreateData, ProductUpdateData, ProductFromDB 
 from ..__common_deps import QueryParamsDependency
 
 
@@ -22,11 +22,6 @@ class ProductsService:
     assert (collection_name := "products") in COLLECTIONS, f"Collection (table) {collection_name} does not exist in database"
     collection = db[collection_name] 
     
-    @classmethod
-    def create_one(cls, product: Product):
-        insertion_product = product.model_dump(exclude_unset=True)
-        insertion_product.update(created_at=datetime.now())
-        return cls.collection.insert_one(insertion_product) or None
     
     
     @classmethod
@@ -36,7 +31,6 @@ class ProductsService:
             for product in params.query_collection(cls.collection)
             ]
         
-    
     @classmethod
     def get_one(cls, id: PydanticObjectId):
         if product_from_db := cls.collection.find_one({"_id": id}):
@@ -47,11 +41,16 @@ class ProductsService:
             )
         
     @classmethod
-    def update_one(cls, id: PydanticObjectId, product: UpdationProduct):
-        product.modified_at = datetime.now()
+    def create_one(cls, product: ProductCreateData):
+        insertion_product = product.model_dump(exclude_unset=True)
+        return cls.collection.insert_one(insertion_product) or None
+    
+    @classmethod
+    def update_one(cls, id: PydanticObjectId, product: ProductUpdateData):
+        # TODO: modify logic to check user id matches existing product staff_id 
         document = cls.collection.find_one_and_update(
             {"_id": id},
-            {"$set": product.model_dump()},
+            {"$set": product.model_dump(exclude_unset=True)},
             return_document=True,
         )
 

@@ -5,7 +5,7 @@ script. Or you can set the username, email and password environment variables.
 
 import os
 
-from api.models import CreationUser
+from api.models import UserRegisterData
 from api.services import AuthService, UsersService
 
 try:
@@ -20,7 +20,7 @@ except FileNotFoundError:
         password=os.environ.get("password"),
     )
 
-insertion_user = CreationUser.model_validate(data)
+insertion_user = UserRegisterData.model_validate(data)
 hash_password = AuthService.get_password_hash(insertion_user.password)
 
 print("Creating super user...")

@@ -1,15 +1,16 @@
-__all__ = ["AuthServiceDependency", "SecurityDependency", "AuthService"]
+__all__ = ["AuthServiceDependency", "SecurityDependency", "AuthService", "RefreshCredentials"]
 
 
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Response, Security, status
 from fastapi_jwt import JwtAccessBearerCookie, JwtAuthorizationCredentials, JwtRefreshBearer
+from fastapi.encoders import jsonable_encoder
 from passlib.context import CryptContext
 
 
 from ..config import access_token_exp, refresh_token_exp, SECRET_KEY, REFRESH_KEY
-from ..models import LoginUser,PublicUserFromDB
+from ..models import UserLoginData,PublicUserFromDB
 
 access_security = JwtAccessBearerCookie(secret_key=SECRET_KEY, access_expires_delta=access_token_exp, auto_error=True)
 refresh_security = JwtRefreshBearer(secret_key=REFRESH_KEY, auto_error=True)
@@ -33,7 +34,7 @@ class AuthService:
         return pwd_context.hash(password)
 
     def login_and_set_access_token(
-        self, user_from_db: dict | None, user: LoginUser, response: Response
+        self, user_from_db: dict | None, user: UserLoginData, response: Response
     ):
         if not user_from_db or not self.verify_password(
             user.password, user_from_db.get("hash_password")
@@ -43,12 +44,12 @@ class AuthService:
                 detail="User not found or credentials incorrect",
             )
 
-        userdata = PublicUserFromDB.model_validate(user_from_db).model_dump(exclude={"created_at", "modified_at"})
+        userdata = PublicUserFromDB.model_validate(user_from_db).model_dump()
         access_token = access_security.create_access_token(
-            subject=userdata, expires_delta=access_token_exp
+            subject=jsonable_encoder(userdata), expires_delta=access_token_exp
         )
         refresh_token = refresh_security.create_refresh_token(
-            subject=userdata, expires_delta=refresh_token_exp
+            subject=jsonable_encoder(userdata), expires_delta=refresh_token_exp
             )
         access_security.set_access_cookie(response, access_token)
         refresh_security.set_refresh_cookie(response, refresh_token)
@@ -68,11 +69,12 @@ class AuthService:
 class SecurityService:
     def __init__(self, credentials: AuthCredentials):
         self.auth_user_id = credentials.subject.get("id")
-        self.auth_user_name = credentials.subject.get("name")
+        self.auth_user_name = credentials.subject.get("username")
         self.auth_user_email = credentials.subject.get("email")
         self.auth_user_role = credentials.subject.get("role")  
-        
-        
+        self.auth_user_created_at = credentials.subject.get("created_at")
+        self.auth_user_modified_at = credentials.subject.get("modified_at")
+        self.auth_user_address: list = credentials.subject.get("address")
         
     @property
     def is_admin(self):

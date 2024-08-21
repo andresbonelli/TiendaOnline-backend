@@ -1,4 +1,4 @@
-from api.models import CreationUser, Order, Product
+from api.models import UserRegisterData, BaseOrder, BaseProduct
 from api.services import AuthService, OrdersService, ProductsService, UsersService
 
 # Create two basic users
@@ -28,7 +28,7 @@ print("Creating users...")
 users_ids = []
 for user in users:
     hash_password = AuthService.get_password_hash(user["password"])
-    insertion_user = CreationUser.model_validate(user)
+    insertion_user = UserRegisterData.model_validate(user)
     result = UsersService.create_one(insertion_user, hash_password=hash_password)
     users_ids.append(result.inserted_id)
 
@@ -111,7 +111,7 @@ products = [
 print("Creating products...")
 product_ids = []
 for product in products:
-    insertion_product = Product.model_validate(product)
+    insertion_product = BaseProduct.model_validate(product)
     result = ProductsService.create_one(insertion_product)
     product_ids.append(result.inserted_id)
 
@@ -134,7 +134,7 @@ orders = [
 
 print("Creating orders...")
 for order in orders:
-    insertion_order = Order.model_validate(order)
+    insertion_order = BaseOrder.model_validate(order)
     OrdersService.create_one(insertion_order)
 
 print("Done!")

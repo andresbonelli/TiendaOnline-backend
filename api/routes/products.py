@@ -6,7 +6,7 @@ from fastapi.routing import APIRouter
 from pydantic_mongo import PydanticObjectId
 from datetime import datetime
 
-from ..models import Product, ProductFromDB, UpdationProduct
+from ..models import BaseProduct, ProductCreateData, ProductUpdateData
 from ..services import ProductsServiceDependency, SecurityDependency
 from ..__common_deps import QueryParamsDependency
 
@@ -26,9 +26,14 @@ async def get_product(id: PydanticObjectId, products: ProductsServiceDependency)
         )
 
 @products_router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_product(product: Product, products:  ProductsServiceDependency, security: SecurityDependency):
+async def create_product(product: BaseProduct, products:  ProductsServiceDependency, security: SecurityDependency):
+    # Check current authenticated user is staff or admin
     security.is_staff_or_raise
-    result = products.create_one(product)
+    # Unpack values from base product Form and enforce staff ID and creation date
+    new_product = ProductCreateData(**product.model_dump())
+    new_product.staff_id = security.auth_user_id
+    new_product.created_at = datetime.now()
+    result = products.create_one(new_product)
     if result.acknowledged:
         return {"result message": f"Product created with id: {result.inserted_id}"}
     else:
@@ -38,8 +43,11 @@ async def create_product(product: Product, products:  ProductsServiceDependency,
             )
 
 @products_router.put("/{id}")
-async def update_product(id: PydanticObjectId, product_data: UpdationProduct, products: ProductsServiceDependency):
-    result = products.update_one(id, product_data) 
+async def update_product(id: PydanticObjectId, product_data: BaseProduct, products: ProductsServiceDependency, security: SecurityDependency):
+    security.is_staff_or_raise
+    modified_product = ProductUpdateData(**product_data.model_dump())
+    modified_product.modified_at = datetime.now()
+    result = products.update_one(id, modified_product) 
     if result:
         return {"result message": "Product succesfully updated",
                 "updated product": result}
@@ -51,8 +59,8 @@ async def update_product(id: PydanticObjectId, product_data: UpdationProduct, pr
   
     
 @products_router.delete("/{id}")
-async def delete_product(id: PydanticObjectId, products: ProductsServiceDependency):
-   
+async def delete_product(id: PydanticObjectId, products: ProductsServiceDependency, security: SecurityDependency):
+    security.is_staff_or_raise
     result = products.delete_one(id)
     if result:
         return {"result message": "Product succesfully deleted",

@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from pydantic_mongo import PydanticObjectId
 
 from ..__common_deps import QueryParams, QueryParamsDependency
-from ..models import Order, UpdationProduct
+from ..models import BaseOrder, ProductUpdateData
 from ..services import (
     OrdersServiceDependency,
     ProductsServiceDependency,
@@ -21,7 +21,7 @@ def get_all_orders(
     security: SecurityDependency,
     params: QueryParamsDependency,
 ):
-    security.is_admin
+    security.is_admin_or_raise
     return orders.get_all(params)
 
 
@@ -63,17 +63,18 @@ def get_orders_by_product_id(
 
 @orders_router.post("/")
 def create_order(
-    order: Order,
+    order: BaseOrder,
     orders: OrdersServiceDependency,
     products: ProductsServiceDependency,
     security: SecurityDependency,
 ):
     security.is_customer_or_raise
     product = products.get_one(order.product_id)
-    assert product.get("quantity", 0) >= order.quantity, "Product is out of stock"
+    assert product.get("stock", 0) >= order.quantity, "Product is out of stock"
+    product_to_update = ProductUpdateData()
     products.update_one(
         order.product_id,
-        UpdationProduct(stock=product["stock"] - order.quantity),
+        ProductUpdateData(stock=product["stock"] - order.quantity),
     )
     result = orders.create_one(order)
     if result.acknowledged:

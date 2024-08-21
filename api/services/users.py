@@ -10,38 +10,13 @@ from pydantic import EmailStr
 from datetime import datetime
 
 from ..config import COLLECTIONS, db
-from ..models import CreationUser, PrivateUserFromDB, PublicUserFromDB, UpdationUser
+from ..models import UserRegisterData, PrivateUserFromDB, PublicUserFromDB, UserUpdateData
 from ..__common_deps import QueryParamsDependency
 
 
 class UsersService:
     assert (collection_name := "users") in COLLECTIONS
     collection = db[collection_name]
-
-    @classmethod
-    def create_one(
-        cls, user: CreationUser, hash_password: str, make_it_admin: bool = False
-    ):
-        try:
-            existing_user = cls.get_one(
-                username=user.username,
-                email=user.email,
-            )
-            if existing_user:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT, detail="User already exists"
-                )
-        except HTTPException:
-            pass
-        
-        insert_user = user.model_dump(exclude={"password"}, exclude_unset=True)
-        insert_user.update(hash_password=hash_password)
-        insert_user.update(created_at=datetime.now())
-
-        if make_it_admin:
-            insert_user.update(role="admin")
-
-        return cls.collection.insert_one(insert_user) or None
        
 
     @classmethod
@@ -73,11 +48,11 @@ class UsersService:
             ]
         }
 
-        if db_user := cls.collection.find_one(filter):
+        if user_from_db := cls.collection.find_one(filter):
             return (
-                PrivateUserFromDB.model_validate(db_user).model_dump()
+                PrivateUserFromDB.model_validate(user_from_db).model_dump()
                 if with_password
-                else PublicUserFromDB.model_validate(db_user).model_dump()
+                else PublicUserFromDB.model_validate(user_from_db).model_dump()
             )
         else:
             raise HTTPException(
@@ -85,12 +60,38 @@ class UsersService:
             )
 
     @classmethod
-    def update_one(cls, id: PydanticObjectId, user: UpdationUser):
-        user.modified_at = datetime.now()
-        print(user.model_dump())
+    def create_one(
+        cls, user: UserRegisterData, hash_password: str, make_it_admin: bool = False
+    ):
+        try:
+            existing_user = cls.get_one(
+                username=user.username,
+                email=user.email,
+            )
+            if existing_user:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT, detail="User already exists"
+                )
+        except HTTPException:
+            pass
+        
+        new_user = user.model_dump(exclude={"password"}, exclude_unset=True)
+        new_user.update(hash_password=hash_password)
+        new_user.update(created_at=datetime.now())
+
+        if make_it_admin:
+            new_user.update(role="admin")
+
+        return cls.collection.insert_one(new_user) or None
+
+    @classmethod
+    def update_one(cls, id: PydanticObjectId, user: UserUpdateData):
+        modified_user = user.model_dump(exclude={"password", "username", "email"}, exclude_unset=True)
+        modified_user.update(modified_at=datetime.now())
+
         document = cls.collection.find_one_and_update(
             {"_id": id},
-            {"$set": user.model_dump(exclude={"password"}, exclude_unset=True)},
+            {"$set": modified_user},
             return_document=True,
         )
 
@@ -105,7 +106,7 @@ class UsersService:
     def update_password(cls, id: PydanticObjectId, hash_password: str):
         document = cls.collection.find_one_and_update(
             {"_id": id},
-            {"$set": {"hash_password": hash_password, "modifiet_at": str(datetime.now())}},
+            {"$set": {"hash_password": hash_password, "modified_at": str(datetime.now())}},
             return_document=True,
         )
         if document:
