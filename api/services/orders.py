@@ -8,7 +8,7 @@ from pydantic_mongo import PydanticObjectId
 
 from ..__common_deps import QueryParamsDependency
 from ..config import COLLECTIONS, db
-from ..models import BaseOrder, OrderFromDB
+from ..models import BaseOrder, OrderCreateData, OrderFromDB
 
 
 class OrdersService:
@@ -16,7 +16,7 @@ class OrdersService:
     collection = db[collection_name]
 
     @classmethod
-    def create_one(cls, order: BaseOrder):
+    def create_one(cls, order: OrderCreateData):
         return cls.collection.insert_one(order.model_dump()) or None
 
 

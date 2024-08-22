@@ -30,6 +30,9 @@ def get_one_user(id: PydanticObjectId, users: UsersServiceDependency):
 def update_user(
     id: PydanticObjectId, user: UserUpdateData, users: UsersServiceDependency, security: SecurityDependency
 ):
+    """
+    Authenticated user only!
+    """
     auth_user_id = security.auth_user_id
     assert (
         auth_user_id == str(id) or security.auth_user_role == "admin"
@@ -39,8 +42,10 @@ def update_user(
 
 @users_router.delete("/{id}")
 def delete_user(id: PydanticObjectId, users: UsersServiceDependency, security: SecurityDependency):
+    """
+    Admins only!
+    """
     security.is_admin_or_raise
-
     result = users.delete_one(id=id)
     if result:
         return {"result message": "User succesfully deleted",

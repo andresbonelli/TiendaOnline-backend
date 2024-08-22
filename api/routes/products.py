@@ -27,6 +27,9 @@ async def get_product(id: PydanticObjectId, products: ProductsServiceDependency)
 
 @products_router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_product(product: BaseProduct, products:  ProductsServiceDependency, security: SecurityDependency):
+    """
+    Staff members and admins only!
+    """
     # Check current authenticated user is staff or admin
     security.is_staff_or_raise
     # Unpack values from base product Form and enforce staff ID and creation date
@@ -43,7 +46,15 @@ async def create_product(product: BaseProduct, products:  ProductsServiceDepende
             )
 
 @products_router.put("/{id}")
-async def update_product(id: PydanticObjectId, product_data: BaseProduct, products: ProductsServiceDependency, security: SecurityDependency):
+async def update_product(
+    id: PydanticObjectId,
+    product_data: BaseProduct,
+    products: ProductsServiceDependency,
+    security: SecurityDependency
+    ):
+    """
+    Staff members and admins only!
+    """
     security.is_staff_or_raise
     modified_product = ProductUpdateData(**product_data.model_dump())
     modified_product.modified_at = datetime.now()
@@ -60,7 +71,10 @@ async def update_product(id: PydanticObjectId, product_data: BaseProduct, produc
     
 @products_router.delete("/{id}")
 async def delete_product(id: PydanticObjectId, products: ProductsServiceDependency, security: SecurityDependency):
-    security.is_staff_or_raise
+    """
+    Admins only!
+    """
+    security.is_admin_or_raise
     result = products.delete_one(id)
     if result:
         return {"result message": "Product succesfully deleted",

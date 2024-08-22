@@ -4,8 +4,10 @@ from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 from pydantic_mongo import PydanticObjectId
 
+from datetime import datetime
+
 from ..__common_deps import QueryParams, QueryParamsDependency
-from ..models import BaseOrder, ProductUpdateData
+from ..models import BaseOrder, OrderCreateData, ProductUpdateData
 from ..services import (
     OrdersServiceDependency,
     ProductsServiceDependency,
@@ -21,31 +23,46 @@ def get_all_orders(
     security: SecurityDependency,
     params: QueryParamsDependency,
 ):
+    """
+    Admins only!
+    """
     security.is_admin_or_raise
     return orders.get_all(params)
 
 
 @orders_router.get("/get_by_seller/{id}")
 def get_orders_by_seller_id(
-    id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
+    id: PydanticObjectId,
+    security: SecurityDependency,
+    orders: OrdersServiceDependency,
+    products: ProductsServiceDependency
 ):
+    """
+    Authenticated staff member only!
+    """
     auth_user_id = security.auth_user_id
     assert (
-        auth_user_id == id or security.auth_user_role == "admin"
+        auth_user_id == str(id) or security.auth_user_role == "admin"
     ), "User does not have access to this orders"
 
-    # BUG: Order does not have "staff_id" !!!
-    params = QueryParams(filter=f"staff_id={id}")
-    return orders.get_all(params)
+    # Search products for current seller. 
+    product_search_params = QueryParams(filter=f"staff_id={id}")
+    seller_products: list[dict] = products.get_all(product_search_params)
+    
+    # Search orders for every product.
+    return [orders.get_all(QueryParams(filter=f"product_id={product["id"]}")) for product in seller_products]
 
 
 @orders_router.get("/get_by_customer/{id}")
 def get_orders_by_customer_id(
     id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
 ):
+    """
+    Authenticated customer only!
+    """
     auth_user_id = security.auth_user_id
     assert (
-        auth_user_id == id or security.auth_user_role == "admin"
+        auth_user_id == str(id) or security.auth_user_role == "admin"
     ), "User does not have access to this orders"
 
     params = QueryParams(filter=f"customer_id={id}")
@@ -56,11 +73,14 @@ def get_orders_by_customer_id(
 def get_orders_by_product_id(
     id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
 ):
-    auth_user_id = security.auth_user_id
+    """
+    Staff members and admins only!
+    """
+    security.is_staff_or_raise
     params = QueryParams(filter=f"product_id={id}")
     return orders.get_all(params)
 
-
+# Purchase order for a single product. 
 @orders_router.post("/")
 def create_order(
     order: BaseOrder,
@@ -68,19 +88,38 @@ def create_order(
     products: ProductsServiceDependency,
     security: SecurityDependency,
 ):
+    """
+    Customers only!
+    """
     security.is_customer_or_raise
-    product = products.get_one(order.product_id)
-    assert product.get("stock", 0) >= order.quantity, "Product is out of stock"
-    product_to_update = ProductUpdateData()
+    
+    existing_product = products.get_one(order.product_id)
+    assert existing_product.get("stock", 0) >= order.quantity, "Product is out of stock"
+    
+    #Prepare Order
+    new_order = OrderCreateData(
+        customer_id=order.customer_id,
+        product_id=order.product_id,
+        quantity=order.quantity,
+        total_price = existing_product["price"] * order.quantity,
+        created_at = datetime.now()
+        )
+    
+    #Update product stock
+    product_to_update = ProductUpdateData(
+        stock=existing_product["stock"] - order.quantity,
+        modified_at=datetime.now()
+        )
     products.update_one(
         order.product_id,
-        ProductUpdateData(stock=product["stock"] - order.quantity),
+        product_to_update,
     )
-    result = orders.create_one(order)
+    
+    result = orders.create_one(new_order)
     if result.acknowledged:
         return {"result message": f"Order created with id: {result.inserted_id}"}
     else:
         return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"error": f"An unexpected error ocurred while creating product"},
+                content={"error": f"An unexpected error ocurred while creating order"},
             )

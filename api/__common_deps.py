@@ -2,8 +2,8 @@ __all__ = ["QueryParamsDependency", "QueryParams"]
 
 from dataclasses import dataclass
 from typing import Annotated, Literal
-
-from fastapi import Depends
+from pydantic import Field
+from fastapi import Depends, Body
 from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 
@@ -41,6 +41,10 @@ class QueryParams:
             .skip(self.offset)
             .sort(self.sort_by, 1 if self.sort_dir == "asc" else -1)
         )
+        
+    def aggregate_collection(self, collection: Collection) -> Cursor:
+        pass
+    # TODO: Define custom MongoDB aggregation pipeline
 
 
 QueryParamsDependency = Annotated[QueryParams, Depends()]
