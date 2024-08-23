@@ -44,7 +44,9 @@ class QueryParams:
         
     def aggregate_collection(self, collection: Collection) -> Cursor:
         pass
-    # TODO: Define custom MongoDB aggregation pipeline
+        # TODO: Define custom MongoDB aggregation pipeline
+  
+
 
 
 QueryParamsDependency = Annotated[QueryParams, Depends()]

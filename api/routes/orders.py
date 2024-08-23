@@ -45,12 +45,13 @@ def get_orders_by_seller_id(
         auth_user_id == str(id) or security.auth_user_role == "admin"
     ), "User does not have access to this orders"
 
+    return orders.find_from_staff_id(id)
     # Search products for current seller. 
-    product_search_params = QueryParams(filter=f"staff_id={id}")
-    seller_products: list[dict] = products.get_all(product_search_params)
+    # product_search_params = QueryParams(filter=f"staff_id={id}")
+    # seller_products: list[dict] = products.get_all(product_search_params)
     
     # Search orders for every product.
-    return [orders.get_all(QueryParams(filter=f"product_id={product["id"]}")) for product in seller_products]
+    # return [orders.get_all(QueryParams(filter=f"product_id={product["id"]}")) for product in seller_products]
 
 
 @orders_router.get("/get_by_customer/{id}")

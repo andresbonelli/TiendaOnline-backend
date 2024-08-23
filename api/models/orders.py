@@ -17,7 +17,6 @@ class OrderCreateData(BaseOrder):
 class OrderUpdateData(BaseOrder):
     customer_id: PydanticObjectId | None = None
     product_id: PydanticObjectId | None = None
-    quantity: int
     modified_at: datetime = Field(default_factory=datetime.now)
 
 class OrderFromDB(BaseOrder):

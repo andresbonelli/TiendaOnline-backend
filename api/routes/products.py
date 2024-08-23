@@ -60,7 +60,13 @@ async def update_product(
     """
     Staff members and admins only!
     """
-    security.is_staff_or_raise
+
+    auth_user_id = security.auth_user_id
+    existing_product = products.get_one(id)
+    assert (
+        auth_user_id == existing_product["staff_id"] or security.auth_user_role == "admin"
+    ), "User does not have permission to modify this product"
+    
     modified_product = ProductUpdateData(**product_data.model_dump())
     modified_product.modified_at = datetime.now()
     result = products.update_one(id, modified_product) 
