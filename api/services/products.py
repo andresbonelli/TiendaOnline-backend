@@ -41,9 +41,9 @@ class ProductsService:
             )
         
     @classmethod
-    def create_one(cls, product: ProductCreateData):
-        insertion_product = product.model_dump(exclude_unset=True)
-        return cls.collection.insert_one(insertion_product) or None
+    def create_one(cls, product: dict):
+        ProductCreateData.model_validate(product)
+        return cls.collection.insert_one(product) or None
     
     @classmethod
     def update_one(cls, id: PydanticObjectId, product: ProductUpdateData):

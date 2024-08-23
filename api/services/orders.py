@@ -16,9 +16,9 @@ class OrdersService:
     collection = db[collection_name]
 
     @classmethod
-    def create_one(cls, order: OrderCreateData):
-        return cls.collection.insert_one(order.model_dump()) or None
-
+    def create_one(cls, order: dict):
+        OrderCreateData.model_validate(order)
+        return cls.collection.insert_one(order) or None
 
     @classmethod
     def get_all(cls, params: QueryParamsDependency):

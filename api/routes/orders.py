@@ -97,13 +97,16 @@ def create_order(
     assert existing_product.get("stock", 0) >= order.quantity, "Product is out of stock"
     
     #Prepare Order
-    new_order = OrderCreateData(
-        customer_id=order.customer_id,
-        product_id=order.product_id,
-        quantity=order.quantity,
-        total_price = existing_product["price"] * order.quantity,
-        created_at = datetime.now()
-        )
+    new_order: dict = {
+        "customer_id": PydanticObjectId(security.auth_user_id),
+        "product_id": PydanticObjectId(order.product_id),
+        "quantity": order.quantity,
+        "total_price": existing_product["price"] * order.quantity,
+        "created_at": datetime.now()
+    }
+    
+    #Store Order in database
+    result = orders.create_one(new_order)
     
     #Update product stock
     product_to_update = ProductUpdateData(
@@ -115,7 +118,6 @@ def create_order(
         product_to_update,
     )
     
-    result = orders.create_one(new_order)
     if result.acknowledged:
         return {"result message": f"Order created with id: {result.inserted_id}"}
     else:

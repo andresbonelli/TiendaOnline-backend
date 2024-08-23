@@ -9,12 +9,6 @@ from ..__common_deps import QueryParamsDependency
 users_router = APIRouter(prefix="/Users", tags=["Users"])
 
 
-@users_router.post("/")
-def create_user(user: UserRegisterData, users: UsersServiceDependency, auth: AuthServiceDependency):
-    hash_password = auth.get_password_hash(user.password)
-    result = users.create_one(user, hash_password)
-    return {"result message": f"User created with id: {result.inserted_id}"}
-
 
 @users_router.get("/")
 def get_all_users(users: UsersServiceDependency, params: QueryParamsDependency):
@@ -25,6 +19,11 @@ def get_all_users(users: UsersServiceDependency, params: QueryParamsDependency):
 def get_one_user(id: PydanticObjectId, users: UsersServiceDependency):
     return users.get_one(id=id)
 
+@users_router.post("/")
+def create_user(user: UserRegisterData, users: UsersServiceDependency, auth: AuthServiceDependency):
+    hash_password = auth.get_password_hash(user.password)
+    result = users.create_one(user, hash_password)
+    return {"result message": f"User created with id: {result.inserted_id}"}
 
 @users_router.put("/{id}")
 def update_user(

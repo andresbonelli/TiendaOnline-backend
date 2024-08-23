@@ -29,7 +29,7 @@ class BaseProduct(BaseModel):
 
 
 class ProductCreateData(BaseProduct):
-    staff_id: PydanticObjectId | None = None
+    staff_id: PydanticObjectId
     created_at: datetime = Field(default_factory=datetime.now)
 
     

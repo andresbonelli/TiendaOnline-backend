@@ -33,9 +33,14 @@ async def create_product(product: BaseProduct, products:  ProductsServiceDepende
     # Check current authenticated user is staff or admin
     security.is_staff_or_raise
     # Unpack values from base product Form and enforce staff ID and creation date
-    new_product = ProductCreateData(**product.model_dump())
-    new_product.staff_id = security.auth_user_id
-    new_product.created_at = datetime.now()
+
+    new_product: dict = {
+        **product.model_dump(),
+        "staff_id": PydanticObjectId(security.auth_user_id),
+        "created_at":datetime.now()
+    }
+    # new_product.staff_id = security.auth_user_id
+    # new_product.created_at = datetime.now()
     result = products.create_one(new_product)
     if result.acknowledged:
         return {"result message": f"Product created with id: {result.inserted_id}"}
