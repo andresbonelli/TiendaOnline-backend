@@ -16,7 +16,6 @@ from ..services import (
 
 orders_router = APIRouter(prefix="/orders", tags=["Orders"])
 
-
 @orders_router.get("/get_all")
 def get_all_orders(
     orders: OrdersServiceDependency,
@@ -28,7 +27,6 @@ def get_all_orders(
     """
     security.is_admin_or_raise
     return orders.get_all(params)
-
 
 @orders_router.get("/get_by_seller/{id}")
 def get_orders_by_seller_id(
@@ -44,15 +42,11 @@ def get_orders_by_seller_id(
     assert (
         auth_user_id == str(id) or security.auth_user_role == "admin"
     ), "User does not have access to this orders"
-
     return orders.find_from_staff_id(id)
-    # Search products for current seller. 
     # product_search_params = QueryParams(filter=f"staff_id={id}")
     # seller_products: list[dict] = products.get_all(product_search_params)
-    
-    # Search orders for every product.
-    # return [orders.get_all(QueryParams(filter=f"product_id={product["id"]}")) for product in seller_products]
 
+    # return [orders.get_all(QueryParams(filter=f"product_id={product["id"]}")) for product in seller_products]
 
 @orders_router.get("/get_by_customer/{id}")
 def get_orders_by_customer_id(
@@ -68,7 +62,6 @@ def get_orders_by_customer_id(
 
     params = QueryParams(filter=f"customer_id={id}")
     return orders.get_all(params)
-
 
 @orders_router.get("/get_by_product/{id}")
 def get_orders_by_product_id(

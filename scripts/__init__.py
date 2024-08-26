@@ -1,3 +1,4 @@
 """
-    These Scripts should not be called by any part inside the application
+    WARNING:
+    These Scripts should not be called from inside the application.
 """

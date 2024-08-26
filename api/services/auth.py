@@ -1,13 +1,12 @@
 __all__ = ["AuthServiceDependency", "SecurityDependency", "AuthService", "RefreshCredentials"]
 
-
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Response, Security, status
 from fastapi_jwt import JwtAccessBearerCookie, JwtAuthorizationCredentials, JwtRefreshBearer
 from fastapi.encoders import jsonable_encoder
-from passlib.context import CryptContext
 
+from passlib.context import CryptContext
 
 from ..config import access_token_exp, refresh_token_exp, SECRET_KEY, REFRESH_KEY
 from ..models import UserLoginData,PublicUserFromDB
@@ -18,10 +17,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 AuthCredentials = Annotated[JwtAuthorizationCredentials, Security(access_security)]
 RefreshCredentials = Annotated[JwtAuthorizationCredentials, Security(refresh_security)]
-
-
-
-
 
 
 class AuthService:  

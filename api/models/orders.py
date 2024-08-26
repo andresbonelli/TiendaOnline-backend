@@ -1,6 +1,7 @@
 __all__ = ["BaseOrder", "OrderFromDB", "OrderCreateData", "OrderUpdateData", "PrivateOrderFromDB"]
 
 from pydantic import BaseModel, Field
+from typing import Any
 from pydantic_mongo import PydanticObjectId
 from datetime import datetime
 
