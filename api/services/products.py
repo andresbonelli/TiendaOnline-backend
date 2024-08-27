@@ -1,15 +1,13 @@
 __all__ = ["ProductsServiceDependency", "ProductsService"]
 
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from pydantic_mongo import PydanticObjectId
-from datetime import datetime
-
 
 from ..config import COLLECTIONS, db
-from ..models import BaseProduct, ProductCreateData, ProductUpdateData, ProductFromDB 
-from ..__common_deps import QueryParamsDependency
+from ..models import ProductCreateData, ProductUpdateData, ProductFromDB 
+from ..__common_deps import QueryParamsDependency, SearchEngineDependency
 
 
 class ProductsService:
@@ -30,6 +28,18 @@ class ProductsService:
             ProductFromDB.model_validate(product).model_dump()
             for product in params.query_collection(cls.collection)
             ]
+        
+    @classmethod
+    def search(cls, search: SearchEngineDependency):
+        return [
+            ProductFromDB.model_validate(product).model_dump()
+            for product in search.atlas_search(cls.collection)
+            ]
+    
+    @classmethod
+    def autocomplete(cls, search: SearchEngineDependency):
+        return search.autocomplete(cls.collection)
+        
         
     @classmethod
     def get_one(cls, id: PydanticObjectId):

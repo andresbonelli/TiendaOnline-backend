@@ -1,10 +1,8 @@
-__all__ = ["QueryParamsDependency", "QueryParams"]
+__all__ = ["QueryParamsDependency", "QueryParams", "SearchEngineDependency", "SearchEngine"]
 
 from dataclasses import dataclass
 from typing import Annotated, Literal
-from collections import defaultdict
-from pydantic import Field
-from fastapi import Depends, Body
+from fastapi import Depends
 from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 
@@ -13,6 +11,8 @@ from pymongo.cursor import Cursor
 @dataclass
 class QueryParams:
     filter: str = ""
+    gt: float = 0.0
+    lt: float = float('inf')
     limit: int = 0
     offset: int = 0
     sort_by: str = "_id"
@@ -25,18 +25,18 @@ class QueryParams:
                 k.strip(): (
                     int(v)
                     if v.strip().isdigit()
-                    else float(v) if v.strip().isdecimal() else {"$regex":f"(?i){v.strip()}(?-i)"}
+                    else float(v) if v.strip().isdecimal()
+                    else {"$regex":f"(?i){v.strip()}(?-i)"}
                 )
                 for k, v in map(lambda x: x.split("="), self.filter.split(","))
             }
             if self.filter
             else {}
         )
+        
+        if "price" in filter_dict and (filter_dict["price"] == 0):
+            filter_dict["price"] = {"$gte":self.gt,"$lte":self.lt}
 
-        # WARNING: Note this return statement with parenthesis
-        #          This is only to split the expression into more lines
-        #          BUT BE CAUTIOUS, if you add a comma before de closing parenthesis
-        #          it will become into a tuple and we don't want that.
         projection_dict = (
             {
                 k.strip(): True if int(v) > 0 else False
@@ -54,10 +54,53 @@ class QueryParams:
         )
         
     def aggregate_collection(self, collection: Collection) -> Cursor:
-        pass
+        pass    
         # TODO: Define custom MongoDB aggregation pipeline
-  
 
+@dataclass
+class SearchEngine:
+    query: str = ""
+    param: str = "name"
+    limit: int = 10
+    
+    def atlas_search(self, collection: Collection) -> Cursor:
+        pipeline = [
+            {
+                "$search": {
+                    "index": "searchProducts",
+                    "text": {
+                        "query": self.query,
+                        "path": {
+                            "wildcard": "*"
+                        },
+                        "fuzzy": {}
+                    }
+                }
+            },
+            {"$limit": self.limit}
+        ]
+        
+        return collection.aggregate(pipeline)
+    
+    def autocomplete(self, collection: Collection) -> list[str]:
+        pipeline = [
+            {
+                "$search": {
+                    "index": "autoCompleteProducts",
+                    "autocomplete": {
+                        "query": self.query,
+                        "path": self.param,
+                        "tokenOrder": "sequential"
+                    }
+                }
+            },
+            {"$limit": self.limit},
+            {"$project": {self.param: 1}}  
+        ]
+        
+        cursor = collection.aggregate(pipeline)   
+        return [doc[self.param] for doc in cursor]
+    
 
-
+SearchEngineDependency = Annotated[SearchEngine, Depends()]
 QueryParamsDependency = Annotated[QueryParams, Depends()]

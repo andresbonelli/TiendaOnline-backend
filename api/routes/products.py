@@ -8,7 +8,7 @@ from datetime import datetime
 
 from ..models import BaseProduct, ProductCreateData, ProductUpdateData
 from ..services import ProductsServiceDependency, SecurityDependency
-from ..__common_deps import QueryParamsDependency
+from ..__common_deps import QueryParamsDependency, SearchEngineDependency
 
 products_router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -17,6 +17,14 @@ products_router = APIRouter(prefix="/products", tags=["Products"])
 async def list_products(products: ProductsServiceDependency, params: QueryParamsDependency):
     return products.get_all(params)
 
+@products_router.get("/search")
+async def search_products(products: ProductsServiceDependency, search: SearchEngineDependency):
+    return products.search(search)
+
+@products_router.get("/autocomplete")
+async def autocomplete_products(products: ProductsServiceDependency, search: SearchEngineDependency):
+    results = products.autocomplete(search)
+    return {"results": results}
 
 @products_router.get("/{id}")
 async def get_product(id: PydanticObjectId, products: ProductsServiceDependency):
