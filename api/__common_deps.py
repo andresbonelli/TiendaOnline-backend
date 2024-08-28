@@ -13,7 +13,7 @@ class QueryParams:
     filter: str = ""
     gt: float = 0.0
     lt: float = float('inf')
-    limit: int = 0
+    limit: int = 50
     offset: int = 0
     sort_by: str = "_id"
     sort_dir: Literal["asc", "desc"] = "asc"
@@ -82,7 +82,7 @@ class SearchEngine:
         
         return collection.aggregate(pipeline)
     
-    def autocomplete(self, collection: Collection) -> list[str]:
+    def autocomplete(self, collection: Collection) -> list[dict]:
         pipeline = [
             {
                 "$search": {
@@ -99,7 +99,13 @@ class SearchEngine:
         ]
         
         cursor = collection.aggregate(pipeline)   
-        return [doc[self.param] for doc in cursor]
+        return [
+            {
+                "id": str(doc["_id"]),
+                "name": doc[self.param]
+            }
+            for doc in cursor
+        ]
     
 
 SearchEngineDependency = Annotated[SearchEngine, Depends()]

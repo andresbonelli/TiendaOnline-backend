@@ -3,4 +3,4 @@
 __pycache__
 .pytest_cache
 ADMIN_USER_CONF
-seed_database_2.py
+seed_test_products.py
