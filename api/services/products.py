@@ -5,8 +5,10 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from pydantic_mongo import PydanticObjectId
 
+from datetime import datetime
+
 from ..config import COLLECTIONS, db
-from ..models import ProductCreateData, ProductUpdateData, ProductFromDB 
+from ..models import BaseProduct, ProductCreateData, ProductUpdateData, ProductFromDB 
 from ..__common_deps import QueryParamsDependency, SearchEngineDependency
 
 
@@ -39,8 +41,7 @@ class ProductsService:
     @classmethod
     def autocomplete(cls, search: SearchEngineDependency):
         return search.autocomplete(cls.collection)
-        
-        
+            
     @classmethod
     def get_one(cls, id: PydanticObjectId):
         if product_from_db := cls.collection.find_one({"_id": id}):
@@ -51,16 +52,24 @@ class ProductsService:
             )
         
     @classmethod
-    def create_one(cls, product: dict):
-        ProductCreateData.model_validate(product)
-        return cls.collection.insert_one(product) or None
+    def create_one(cls, product: BaseProduct, staff_id: PydanticObjectId):
+        new_product: dict = {
+            **product.model_dump(),
+            "staff_id": staff_id,
+            "created_at":datetime.now()
+        }
+        ProductCreateData.model_validate(new_product)
+        return cls.collection.insert_one(new_product) or None
     
     @classmethod
     def update_one(cls, id: PydanticObjectId, product: ProductUpdateData):
         # TODO: modify logic to check user id matches existing product staff_id 
+        modified_product: dict = product.model_dump(exclude_unset=True)
+        modified_product.update(modified_at=datetime.now())
+        
         document = cls.collection.find_one_and_update(
             {"_id": id},
-            {"$set": product.model_dump(exclude_unset=True)},
+            {"$set": modified_product},
             return_document=True,
         )
 
@@ -81,9 +90,7 @@ class ProductsService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Product not found"
             )
 
-
 ProductsServiceDependency = Annotated[ProductsService, Depends()]        
-# Same as:
-# ProductsServiceDependency = Annotated[ProductsService, Depends(ProductsService)]
+
 
 

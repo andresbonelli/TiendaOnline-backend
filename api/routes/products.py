@@ -40,16 +40,8 @@ async def create_product(product: BaseProduct, products:  ProductsServiceDepende
     """
     # Check current authenticated user is staff or admin
     security.is_staff_or_raise
-    # Unpack values from base product Form and enforce staff ID and creation date
 
-    new_product: dict = {
-        **product.model_dump(),
-        "staff_id": PydanticObjectId(security.auth_user_id),
-        "created_at":datetime.now()
-    }
-    # new_product.staff_id = security.auth_user_id
-    # new_product.created_at = datetime.now()
-    result = products.create_one(new_product)
+    result = products.create_one(product, PydanticObjectId(security.auth_user_id))
     if result.acknowledged:
         return {"result message": f"Product created with id: {result.inserted_id}"}
     else:
@@ -58,26 +50,23 @@ async def create_product(product: BaseProduct, products:  ProductsServiceDepende
                 content={"error": f"An unexpected error ocurred while creating product"},
             )
 
-@products_router.put("/{id}")
+@products_router.patch("/{id}")
 async def update_product(
     id: PydanticObjectId,
-    product_data: BaseProduct,
+    product: ProductUpdateData,
     products: ProductsServiceDependency,
     security: SecurityDependency
     ):
     """
     Staff members and admins only!
     """
-
     auth_user_id = security.auth_user_id
     existing_product = products.get_one(id)
     assert (
         auth_user_id == existing_product["staff_id"] or security.auth_user_role == "admin"
     ), "User does not have permission to modify this product"
     
-    modified_product = ProductUpdateData(**product_data.model_dump())
-    modified_product.modified_at = datetime.now()
-    result = products.update_one(id, modified_product) 
+    result = products.update_one(id, product) 
     if result:
         return {"result message": "Product succesfully updated",
                 "updated product": result}
@@ -87,7 +76,6 @@ async def update_product(
                 content={"error": f"Product with id: {id} was not found."},
             )
   
-    
 @products_router.delete("/{id}")
 async def delete_product(id: PydanticObjectId, products: ProductsServiceDependency, security: SecurityDependency):
     """

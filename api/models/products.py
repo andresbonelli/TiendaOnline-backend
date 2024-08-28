@@ -34,13 +34,12 @@ class ProductCreateData(BaseProduct):
 
     
 class ProductUpdateData(BaseProduct):
-    staff_id: PydanticObjectId | None = None
     name: str | None = None
     description: str | None = None
     price: float | None = Field(ge=0, default=None)
     stock: int | None = Field(ge=0, default=None)
     sales_count: int | None = Field(ge=0, default=None)
-    modified_at: datetime = Field(default_factory=datetime.now)
+
 
   
 class ProductFromDB(BaseProduct):
