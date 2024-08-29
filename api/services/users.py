@@ -18,7 +18,6 @@ class UsersService:
     assert (collection_name := "users") in COLLECTIONS
     collection = db[collection_name]
        
-
     @classmethod
     def get_all(cls, params: QueryParamsDependency):
         return [
@@ -99,7 +98,7 @@ class UsersService:
             return PublicUserFromDB.model_validate(document).model_dump()
         else:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {id} was not found."
             )
 
     @classmethod
@@ -113,7 +112,7 @@ class UsersService:
             return PrivateUserFromDB.model_validate(document).model_dump()
         else:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {id} was not found."
             )
 
     @classmethod
@@ -123,7 +122,7 @@ class UsersService:
             return PublicUserFromDB.model_validate(document).model_dump()
         else:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {id} was not found."
             )
 
 
