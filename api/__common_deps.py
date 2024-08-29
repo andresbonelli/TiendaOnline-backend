@@ -59,7 +59,7 @@ class QueryParams:
 
 @dataclass
 class SearchEngine:
-    query: str = ""
+    query: str = "default query"
     param: str = "name"
     limit: int = 10
     

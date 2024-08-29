@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from pydantic_mongo import PydanticObjectId
+from pydantic_core import ValidationError
 
 from datetime import datetime
 
@@ -26,17 +27,32 @@ class ProductsService:
     
     @classmethod
     def get_all(cls, params: QueryParamsDependency):
-        return [
-            ProductFromDB.model_validate(product).model_dump()
-            for product in params.query_collection(cls.collection)
-            ]
+        response_dict = {"product_list": [], "errors": []}
+        results = params.query_collection(cls.collection)
+        for product in results:
+            try:
+               response_dict["product_list"].append(
+                   ProductFromDB.model_validate(product).model_dump()
+                   ) 
+            except ValidationError as e:
+                response_dict["errors"].append(f"Validation error: {e}")
+               
+        return response_dict
         
     @classmethod
     def search(cls, search: SearchEngineDependency):
-        return [
-            ProductFromDB.model_validate(product).model_dump()
-            for product in search.atlas_search(cls.collection)
-            ]
+        response_dict = {"product_list": [], "errors": []}
+        results = search.atlas_search(cls.collection)
+        for product in results:
+            try:
+               response_dict["product_list"].append(
+                   ProductFromDB.model_validate(product).model_dump()
+                   ) 
+            except ValidationError as e:
+                response_dict["errors"].append(f"Validation error: {e}")
+               
+        return response_dict
+
     
     @classmethod
     def autocomplete(cls, search: SearchEngineDependency):
@@ -44,8 +60,15 @@ class ProductsService:
             
     @classmethod
     def get_one(cls, id: PydanticObjectId):
+        
         if product_from_db := cls.collection.find_one({"_id": id}):
-            return ProductFromDB.model_validate(product_from_db).model_dump()
+            try:
+                return ProductFromDB.model_validate(product_from_db).model_dump()
+            except ValidationError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Validation error while reading product: {e}"
+                )
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Product not found"
@@ -63,7 +86,7 @@ class ProductsService:
     
     @classmethod
     def update_one(cls, id: PydanticObjectId, product: ProductUpdateData):
-        # TODO: modify logic to check user id matches existing product staff_id 
+             
         modified_product: dict = product.model_dump(exclude_unset=True)
         modified_product.update(modified_at=datetime.now())
         
@@ -77,7 +100,7 @@ class ProductsService:
             return ProductFromDB.model_validate(document).model_dump()
         else:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Product not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Product with id {id} not found"
             )
 
     @classmethod
@@ -87,7 +110,7 @@ class ProductsService:
             return ProductFromDB.model_validate(document).model_dump()
         else:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Product not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Product with id {id} not found"
             )
 
 ProductsServiceDependency = Annotated[ProductsService, Depends()]        

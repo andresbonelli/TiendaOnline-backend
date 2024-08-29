@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from .__base import HOST_URL, HOST_PORT, FRONTEND_HOST
 
-access_token_exp = timedelta(minutes=30)
+access_token_exp = timedelta(days=30)
 refresh_token_exp = timedelta(days=1)
 
 allowed_origins = [

@@ -87,17 +87,38 @@ class SecurityService:
 
     @property
     def is_admin_or_raise(self):
-        assert self.auth_user_role == "admin", "User does not have admin role"
+        if self.auth_user_role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User does not have admin role"
+            )
 
     @property
     def is_staff_or_raise(self):
         role = self.auth_user_role
-        assert role == "admin" or role == "staff", "User does not have seller role"
+        if role not in ["admin","staff"]:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User does not have staff role"
+            )
 
     @property
     def is_customer_or_raise(self):
         role = self.auth_user_role
-        assert role == "admin" or role == "customer", "User does not have customer role"
+        if role not in ["admin","customer"]:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User does not have customer role"
+            )
+    
+    def modify_product_permission(self, product_staff_id: str):
+        role = self.auth_user_role
+        if str(self.auth_user_id) != product_staff_id and role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User does not have permission to modify this product"
+            )
+               
 
 AuthServiceDependency = Annotated[AuthService, Depends()]
 SecurityDependency = Annotated[SecurityService, Depends()]

@@ -4,9 +4,9 @@ from fastapi import status
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from pydantic_mongo import PydanticObjectId
-from datetime import datetime
 
-from ..models import BaseProduct, ProductCreateData, ProductUpdateData
+
+from ..models import BaseProduct, ProductUpdateData
 from ..services import ProductsServiceDependency, SecurityDependency
 from ..__common_deps import QueryParamsDependency, SearchEngineDependency
 
@@ -28,10 +28,8 @@ async def autocomplete_products(products: ProductsServiceDependency, search: Sea
 
 @products_router.get("/{id}")
 async def get_product(id: PydanticObjectId, products: ProductsServiceDependency):
-    return products.get_one(id) or JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={"error": f"Product with id: {id} was not found."},
-        )
+    return products.get_one(id) 
+
 
 @products_router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_product(product: BaseProduct, products:  ProductsServiceDependency, security: SecurityDependency):
@@ -50,7 +48,7 @@ async def create_product(product: BaseProduct, products:  ProductsServiceDepende
                 content={"error": f"An unexpected error ocurred while creating product"},
             )
 
-@products_router.patch("/{id}")
+@products_router.patch("/{id}", status_code=status.HTTP_202_ACCEPTED)
 async def update_product(
     id: PydanticObjectId,
     product: ProductUpdateData,
@@ -60,34 +58,21 @@ async def update_product(
     """
     Staff members and admins only!
     """
-    auth_user_id = security.auth_user_id
     existing_product = products.get_one(id)
-    assert (
-        auth_user_id == existing_product["staff_id"] or security.auth_user_role == "admin"
-    ), "User does not have permission to modify this product"
-    
+    security.modify_product_permission(existing_product["staff_id"])
+
     result = products.update_one(id, product) 
-    if result:
-        return {"result message": "Product succesfully updated",
-                "updated product": result}
-    else:
-        return JSONResponse(
-                status_code=status.HTTP_404_NOT_FOUND,
-                content={"error": f"Product with id: {id} was not found."},
-            )
+
+    return {"message": "Product succesfully updated","updated product": result}
+ 
   
-@products_router.delete("/{id}")
+@products_router.delete("/{id}", status_code=status.HTTP_202_ACCEPTED)
 async def delete_product(id: PydanticObjectId, products: ProductsServiceDependency, security: SecurityDependency):
     """
     Admins only!
     """
     security.is_admin_or_raise
     result = products.delete_one(id)
-    if result:
-        return {"result message": "Product succesfully deleted",
-                "deleted product": result}
-    else:
-        return JSONResponse(
-                status_code=status.HTTP_404_NOT_FOUND,
-                content={"error": f"Product with id: {id} was not found."},
-                )
+   
+    return {"message": "Product succesfully deleted", "deleted product": result}
+  
