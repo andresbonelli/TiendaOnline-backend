@@ -111,12 +111,12 @@ class SecurityService:
                 detail="User does not have customer role"
             )
     
-    def modify_product_permission(self, product_staff_id: str):
+    def check_user_permission(self, product_staff_id: str):
         role = self.auth_user_role
         if str(self.auth_user_id) != product_staff_id and role != "admin":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User does not have permission to modify this product"
+                detail="User does not have permission to access this item"
             )
                
 

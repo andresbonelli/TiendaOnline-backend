@@ -59,7 +59,7 @@ async def update_product(
     Staff members and admins only!
     """
     existing_product = products.get_one(id)
-    security.modify_product_permission(existing_product["staff_id"])
+    security.check_user_permission(existing_product["staff_id"])
 
     result = products.update_one(id, product) 
 
