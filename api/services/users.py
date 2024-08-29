@@ -46,7 +46,7 @@ class UsersService:
                 {"email": email},
             ]
         }
-
+        
         if user_from_db := cls.collection.find_one(filter):
             return (
                 PrivateUserFromDB.model_validate(user_from_db).model_dump()
@@ -62,17 +62,15 @@ class UsersService:
     def create_one(
         cls, user: UserRegisterData, hash_password: str, make_it_admin: bool = False
     ):
-        try:
-            existing_user = cls.get_one(
-                username=user.username,
-                email=user.email,
+        
+        existing_user = cls.get_one(
+            username=user.username,
+            email=user.email,
+        )  
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="User already exists"
             )
-            if existing_user:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT, detail="User already exists"
-                )
-        except HTTPException:
-            pass
             
         new_user = user.model_dump(exclude={"password"}, exclude_unset=True)
         new_user.update(hash_password=hash_password)
