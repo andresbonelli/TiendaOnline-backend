@@ -102,7 +102,7 @@ class SearchEngine:
         return [
             {
                 "id": str(doc["_id"]),
-                "name": doc[self.param]
+                self.param: doc[self.param]
             }
             for doc in cursor
         ]
