@@ -74,7 +74,7 @@ class UsersService:
                 )
         except HTTPException:
             pass
-        
+            
         new_user = user.model_dump(exclude={"password"}, exclude_unset=True)
         new_user.update(hash_password=hash_password)
         new_user.update(created_at=datetime.now())

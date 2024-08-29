@@ -62,6 +62,10 @@ class AuthService:
         return {"access_token": access_token, "refresh_token": refresh_token}
 
 class SecurityService:
+    """
+    Different ways to protect endpoints.
+    
+    """
     def __init__(self, credentials: AuthCredentials):
         self.auth_user_id = credentials.subject.get("id")
         self.auth_user_name = credentials.subject.get("username")
@@ -111,9 +115,9 @@ class SecurityService:
                 detail="User does not have customer role"
             )
     
-    def check_user_permission(self, product_staff_id: str):
+    def check_user_permission(self, user_id: str):
         role = self.auth_user_role
-        if str(self.auth_user_id) != product_staff_id and role != "admin":
+        if str(self.auth_user_id) != user_id and role != "admin":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User does not have permission to access this item"
