@@ -6,13 +6,40 @@ from fastapi import Depends
 from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 
+op_map = {
+    ">=": "$gte",
+    "<=": "$lte",
+    "!=": "$ne",
+    ">": "$gt",
+    "<": "$lt",
+    "=": "$eq",
+    "~": "$regex",
+}
 
+def format_value(v: str, regex=False):
+    return (
+        int(v)
+        if v.strip().isdigit()
+        else float(v) if v.strip().isdecimal()
+        else f"(?i){v.strip()}(?-i)" if regex
+        else v.strip()
+    )
+    
+def get_filter_query(filter_item: str):
+    op = ""
+    for o in op_map:
+        if o in filter_item:
+            op = o
+            break
+    if not op:
+        return {}
+
+    k, v = filter_item.split(op)
+    return {k.strip(): {op_map[op]: format_value(v, regex=(op=="~"))}}
 
 @dataclass
 class QueryParams:
     filter: str = ""
-    gt: float = 0.0
-    lt: float = float('inf')
     limit: int = 50
     offset: int = 0
     sort_by: str = "_id"
@@ -20,23 +47,12 @@ class QueryParams:
     projection: str = ""
     
     def query_collection(self, collection: Collection) -> Cursor:
-        filter_dict = (
-            {
-                k.strip(): (
-                    int(v)
-                    if v.strip().isdigit()
-                    else float(v) if v.strip().isdecimal()
-                    else {"$regex":f"(?i){v.strip()}(?-i)"}
-                )
-                for k, v in map(lambda x: x.split("="), self.filter.split(","))
-            }
-            if self.filter
-            else {}
-        )
-        
-        if "price" in filter_dict and (filter_dict["price"] == 0):
-            filter_dict["price"] = {"$gte":self.gt,"$lte":self.lt}
+        filter_dict = {}
+        filter_item_list = self.filter.split(",")
 
+        for filter_item in filter_item_list:
+            filter_dict.update(get_filter_query(filter_item))
+        
         projection_dict = (
             {
                 k.strip(): True if int(v) > 0 else False

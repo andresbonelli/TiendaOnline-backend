@@ -54,15 +54,13 @@ class UsersService:
                 else PublicUserFromDB.model_validate(user_from_db).model_dump()
             )
         else:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
+            return None
 
     @classmethod
     def create_one(
         cls, user: UserRegisterData, hash_password: str, make_it_admin: bool = False
     ):
-        
+     
         existing_user = cls.get_one(
             username=user.username,
             email=user.email,

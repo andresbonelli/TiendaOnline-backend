@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 from pydantic_mongo import PydanticObjectId
 
 from ..models import UserRegisterData, UserUpdateData
@@ -22,7 +22,12 @@ def get_one_user_by_id(id: PydanticObjectId, users: UsersServiceDependency, secu
     Authenticated user only!
     """
     security.check_user_permission(str(id))
-    return users.get_one(id=id)
+    if user := users.get_one(id=id):
+        return user
+    else:
+        raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
 
 @users_router.post("/")
 def create_user(user: UserRegisterData, users: UsersServiceDependency, auth: AuthServiceDependency, security: SecurityDependency):
