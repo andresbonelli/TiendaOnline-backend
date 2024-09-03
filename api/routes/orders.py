@@ -27,6 +27,14 @@ def get_all_orders(
     security.is_admin_or_raise
     return orders.get_all(params)
 
+@orders_router.get("/{id}")
+def get_order_by_id(id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency):
+    """
+    Staff members and admins only!
+    """
+    security.is_staff_or_raise
+    return orders.get_one(id)
+
 @orders_router.get("/get_by_customer/{id}")
 def get_orders_by_customer_id(
     id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
@@ -126,13 +134,35 @@ def complete_order(
     
     security.check_user_permission(existing_order["customer_id"])
     
-    total_price = orders.calculate_total_price(id)
+    if existing_order["status"] == OrderStatus.pending:
+        total_price = orders.calculate_total_price(id)
+        result = orders.update_one(id, OrderUpdateData(
+            status=OrderStatus.completed,
+            total_price=total_price[0]
+            ))
+        return {"message": "Order succesfully fulfilled","Completed order": result}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Cannot complete order {id} with status {existing_order["status"]}"
+        )
     
-    result = orders.update_one(id, OrderUpdateData(
-        status=OrderStatus.completed,
-        total_price=total_price[0]
-        ))
+@orders_router.patch("/cancel/{id}")
+def cancel_order(
+    id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
+):
+    """
+    Authenticated customer only!
+    """
+    existing_order = orders.get_one(id)
     
-    return {"message": "Order succesfully fulfilled","Completed order": result}
+    security.check_user_permission(existing_order["customer_id"])
     
-    
+    if existing_order["status"] == OrderStatus.pending:
+        result = orders.update_one(id, OrderUpdateData(status=OrderStatus.cancelled))
+        return {"message": "Order cancelled!","Cancelled order": result}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Cannot cancel order {id} with status {existing_order["status"]}"
+        )

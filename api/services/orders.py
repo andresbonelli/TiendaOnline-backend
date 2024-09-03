@@ -29,7 +29,7 @@ class OrdersService:
         if authorized_user_id:
             filter_criteria.update({"customer_id": authorized_user_id})
 
-        if order_from_db := cls.collection.find(filter_criteria):
+        if order_from_db := cls.collection.find_one(filter_criteria):
             return OrderFromDB.model_validate(order_from_db).model_dump()
         else:
             raise HTTPException(
