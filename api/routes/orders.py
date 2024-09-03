@@ -1,13 +1,13 @@
 __all__ = ["orders_router"]
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic_mongo import PydanticObjectId
 
 from datetime import datetime
 
 from ..__common_deps import QueryParams, QueryParamsDependency
-from ..models import BaseOrder, OrderCreateData, ProductUpdateData
+from ..models import BaseOrder, OrderStatus, ProductUpdateData, OrderUpdateData
 from ..services import (
     OrdersServiceDependency,
     ProductsServiceDependency,
@@ -28,29 +28,18 @@ def get_all_orders(
     security.is_admin_or_raise
     return orders.get_all(params)
 
-@orders_router.get("/get_by_seller/{id}")
-def get_orders_by_seller_id(
-    id: PydanticObjectId,
-    security: SecurityDependency,
-    orders: OrdersServiceDependency,
-):
-    """
-    Authenticated staff member only!
-    """
-    security.check_user_permission(str(id))
-    return orders.find_from_staff_id(id)
+# @orders_router.get("/get_by_seller/{id}")
+# def get_orders_by_seller_id(
+#     id: PydanticObjectId,
+#     security: SecurityDependency,
+#     orders: OrdersServiceDependency,
+# ):
+#     """
+#     Authenticated staff member only!
+#     """
+#     security.check_user_permission(str(id))
+#     return orders.find_from_staff_id(id)
   
-@orders_router.get("/get_by_customer/{id}")
-def get_orders_by_customer_id(
-    id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
-):
-    """
-    Authenticated customer only!
-    """
-    security.check_user_permission(str(id))
-    params = QueryParams(filter=f"customer_id={id}")
-    return orders.get_all(params)
-
 @orders_router.get("/get_by_product/{id}")
 def get_orders_by_product_id(
     id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
@@ -62,7 +51,19 @@ def get_orders_by_product_id(
     params = QueryParams(filter=f"product_id={id}")
     return orders.get_all(params)
 
-# Purchase order for a single product. 
+@orders_router.get("/get_by_customer/{id}")
+def get_orders_by_customer_id(
+    id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
+):
+    """
+    Authenticated customer only!
+    """
+    security.check_user_permission(str(id))
+    params = QueryParams(filter=f"customer_id={id}")
+    return orders.get_all(params)
+
+
+# Purchase order (multiple products). 
 @orders_router.post("/")
 def create_order(
     order: BaseOrder,
@@ -75,15 +76,25 @@ def create_order(
     """
     security.is_customer_or_raise
     
-    existing_product = products.get_one(order.product_id)
-    assert existing_product.get("stock", 0) >= order.quantity, "Product is out of stock"
+    for product in order.products:
+        existing_product = products.get_one(product.product_id)
+        if existing_product.get("stock", 0) <= product.quantity:
+            raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Product {product.product_id} is out of stock"
+                ) 
     
     #Prepare Order
     new_order: dict = {
         "customer_id": PydanticObjectId(security.auth_user_id),
-        "product_id": PydanticObjectId(order.product_id),
-        "quantity": order.quantity,
-        "total_price": existing_product["price"] * order.quantity,
+        "products": [
+                {
+                "product_id": PydanticObjectId(product.product_id),
+                "quantity": product.quantity
+                }
+                for product in order.products
+            ],
+        "status": OrderStatus.pending,
         "created_at": datetime.now()
     }
     
@@ -91,14 +102,16 @@ def create_order(
     result = orders.create_one(new_order)
     
     #Update product stock
-    product_to_update = ProductUpdateData(
-        stock=existing_product["stock"] - order.quantity,
-        modified_at=datetime.now()
+    for product in new_order["products"]:
+        existing_product = products.get_one(product["product_id"])
+        product_to_update = ProductUpdateData(
+            stock=existing_product["stock"] - product["quantity"],
+            modified_at=datetime.now()
+            )
+        products.update_one(
+            product["product_id"],
+            product_to_update,
         )
-    products.update_one(
-        order.product_id,
-        product_to_update,
-    )
     
     if result.acknowledged:
         return {"result message": f"Order created with id: {result.inserted_id}"}
@@ -107,3 +120,24 @@ def create_order(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content={"error": f"An unexpected error ocurred while creating order"},
             )
+
+@orders_router.patch("/complete/{id}")
+def complete_order(
+    id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
+):
+    """
+    Authenticated customer only!
+    """
+    existing_order = orders.get_one(id)
+    security.check_user_permission(existing_order["customer_id"])
+    
+    total_price: list = orders.calculate_total_price(id)
+    
+    result = orders.update_one(id, OrderUpdateData(
+        status=OrderStatus.completed,
+        total_price=total_price[0]
+        ))
+    
+    return {"message": "Order succesfully fulfilled","Completed order": result}
+    
+    
