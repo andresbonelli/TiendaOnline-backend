@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from pydantic_mongo import PydanticObjectId
 from pydantic import EmailStr
-
+from pydantic_core import ValidationError
 from datetime import datetime
 
 from ..config import COLLECTIONS, db
@@ -20,10 +20,17 @@ class UsersService:
        
     @classmethod
     def get_all(cls, params: QueryParamsDependency):
-        return [
-            PublicUserFromDB.model_validate(user).model_dump()
-            for user in params.query_collection(cls.collection)
-        ]
+        response_dict = {"users": [], "errors": []}
+        results = params.query_collection(cls.collection)
+        for user in results:
+            try:
+               response_dict["users"].append(
+                   PublicUserFromDB.model_validate(user).model_dump()
+                   ) 
+            except ValidationError as e:
+                response_dict["errors"].append(f"Validation error: {e}")
+               
+        return response_dict
 
     @classmethod
     def get_one(

@@ -23,8 +23,6 @@ class ProductsService:
     assert (collection_name := "products") in COLLECTIONS, f"Collection (table) {collection_name} does not exist in database"
     collection = db[collection_name] 
     
-    
-    
     @classmethod
     def get_all(cls, params: QueryParamsDependency):
         response_dict = {"product_list": [], "errors": []}
