@@ -3,10 +3,9 @@ __all__ = ["orders_router"]
 from fastapi import APIRouter, status, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic_mongo import PydanticObjectId
-
 from datetime import datetime
 
-from ..__common_deps import QueryParams, QueryParamsDependency
+from ..__common_deps import QueryParamsDependency
 from ..models import BaseOrder, OrderStatus, ProductUpdateData, OrderUpdateData
 from ..services import (
     OrdersServiceDependency,
@@ -28,17 +27,15 @@ def get_all_orders(
     security.is_admin_or_raise
     return orders.get_all(params)
 
-# @orders_router.get("/get_by_seller/{id}")
-# def get_orders_by_seller_id(
-#     id: PydanticObjectId,
-#     security: SecurityDependency,
-#     orders: OrdersServiceDependency,
-# ):
-#     """
-#     Authenticated staff member only!
-#     """
-#     security.check_user_permission(str(id))
-#     return orders.find_from_staff_id(id)
+@orders_router.get("/get_by_customer/{id}")
+def get_orders_by_customer_id(
+    id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
+):
+    """
+    Authenticated customer only!
+    """
+    security.check_user_permission(str(id))
+    return orders.find_from_customer_id(id)
   
 @orders_router.get("/get_by_product/{id}")
 def get_orders_by_product_id(
@@ -48,20 +45,17 @@ def get_orders_by_product_id(
     Staff members and admins only!
     """
     security.is_staff_or_raise
-    params = QueryParams(filter=f"product_id={id}")
-    return orders.get_all(params)
+    return orders.find_from_product_id(id)
 
-@orders_router.get("/get_by_customer/{id}")
-def get_orders_by_customer_id(
+@orders_router.get("/get_by_staff/{id}")
+def get_orders_by_staff_id(
     id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
 ):
     """
-    Authenticated customer only!
+    Authenticated staff member only!
     """
     security.check_user_permission(str(id))
-    params = QueryParams(filter=f"customer_id={id}")
-    return orders.get_all(params)
-
+    return orders.find_from_staff_id(id)
 
 # Purchase order (multiple products). 
 @orders_router.post("/")
@@ -129,9 +123,10 @@ def complete_order(
     Authenticated customer only!
     """
     existing_order = orders.get_one(id)
+    
     security.check_user_permission(existing_order["customer_id"])
     
-    total_price: list = orders.calculate_total_price(id)
+    total_price = orders.calculate_total_price(id)
     
     result = orders.update_one(id, OrderUpdateData(
         status=OrderStatus.completed,
