@@ -50,7 +50,6 @@ class ProductsService:
                 response_dict["errors"].append(f"Validation error: {e}")
                
         return response_dict
-
     
     @classmethod
     def autocomplete(cls, search: SearchEngineDependency):
@@ -71,6 +70,11 @@ class ProductsService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Product not found"
             )
+        
+    @classmethod
+    def find_from_staff_id(cls, staff_id: PydanticObjectId): 
+        cursor = cursor = cls.collection.find({"staff_id": staff_id})
+        return [ProductFromDB.model_validate(product).model_dump() for product in cursor]
         
     @classmethod
     def create_one(cls, product: BaseProduct, staff_id: PydanticObjectId):

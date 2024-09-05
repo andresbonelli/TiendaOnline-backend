@@ -30,7 +30,14 @@ async def autocomplete_products(products: ProductsServiceDependency, search: Sea
 async def get_product(id: PydanticObjectId, products: ProductsServiceDependency):
     return products.get_one(id) 
 
-
+@products_router.get("/get_by_staff/{id}")
+async def get_products_by_staff_id(id: PydanticObjectId, products: ProductsServiceDependency, security: SecurityDependency):
+    """
+    Authenticaded staff members and admins only!
+    """
+    security.check_user_permission(id)
+    return products.find_from_staff_id(id)
+    
 @products_router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_product(product: BaseProduct, products:  ProductsServiceDependency, security: SecurityDependency):
     """
@@ -56,7 +63,7 @@ async def update_product(
     security: SecurityDependency
     ):
     """
-    Staff members and admins only!
+    Authenticaded staff members and admins only!
     """
     existing_product = products.get_one(id)
     security.check_user_permission(existing_product["staff_id"])

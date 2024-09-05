@@ -23,13 +23,8 @@ class OrdersService:
         ]
 
     @classmethod
-    def get_one(cls, id: PydanticObjectId, authorized_user_id: PydanticObjectId | None=None):
-        filter_criteria: dict = {"_id": id}
-        # WARNING: Filter criteria is always "order" id !!! 
-        if authorized_user_id:
-            filter_criteria.update({"customer_id": authorized_user_id})
-
-        if order_from_db := cls.collection.find_one(filter_criteria):
+    def get_one(cls, id: PydanticObjectId):
+        if order_from_db := cls.collection.find_one({"_id": id}):
             return OrderFromDB.model_validate(order_from_db).model_dump()
         else:
             raise HTTPException(
