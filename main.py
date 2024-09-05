@@ -3,10 +3,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 
-from .api.config import allowed_origins
+from .api.config import allowed_origins, APP_TITLE
 from .api.routes import api_router, auth_router 
 
-APP_TITLE = "Devlights Bootcamp 3.0 - Proyecto Final"
 
 app = FastAPI(title=APP_TITLE)
 

@@ -1,16 +1,15 @@
-
 __all__ = [
     "BaseUser",
     "UserLoginData",
-    "PublicUserFromDB",
+    "UserFromDB",
     "PrivateUserFromDB",
     "UserRegisterData",
     "UserUpdateData",
+    "UserVerifyRequest",
 ]
 
 from pydantic import BaseModel, Field, EmailStr, AliasChoices
 from pydantic_mongo import PydanticObjectId
-from typing import List, Optional
 from datetime import datetime
 from ..config import CountryCode
 from enum import Enum
@@ -36,35 +35,39 @@ class BaseUser(BaseModel):
     username: str
     role: Role = Field(default=Role.CUSTOMER)
     email: EmailStr
-    firstname: Optional[str] = None
-    lastname: Optional[str] = None
-    image: Optional[str] = None
-    address: Optional[List[Address]] = None   
+    firstname: str | None = None
+    lastname: str | None = None
+    image: str | None = None
+    address: list[Address] | None = None   
 
+class UserLoginData(BaseModel):
+    username: str
+    password: str
+    
+class UserVerifyRequest(BaseModel):
+    token: str
+    email: EmailStr
+    
+class UserRegisterData(BaseUser):
+    role: CreationRole = Field(default=CreationRole.CUSTOMER)
+    password: str 
+    
 class UserUpdateData(BaseUser):
     username: str = None
     role: CreationRole = Field(default=CreationRole.CUSTOMER)
     email: EmailStr = None
     image: str | None = None
+    is_active: bool | None = None
 
-class UserRegisterData(BaseUser):
-    role: CreationRole = Field(default=CreationRole.CUSTOMER)
-    password: str 
-    
-class UserLoginData(BaseModel):
-    username: str
-    password: str
-
-class PublicUserFromDB(BaseUser):
+class UserFromDB(BaseUser):
     id: PydanticObjectId = Field(validation_alias=AliasChoices("_id", "id"))
+    is_active: bool | None = None
     created_at: datetime = None
     modified_at: datetime | None = None
     
-class PrivateUserFromDB(BaseUser):
-    id: PydanticObjectId = Field(alias="_id")
+class PrivateUserFromDB(UserFromDB):
     hash_password: str
-    created_at: datetime = None
-    modified_at: Optional[datetime] = None
+
    
 
   

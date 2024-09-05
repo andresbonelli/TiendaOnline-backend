@@ -10,13 +10,14 @@ from pydantic_core import ValidationError
 from datetime import datetime
 
 from ..config import COLLECTIONS, db
-from ..models import UserRegisterData, PrivateUserFromDB, PublicUserFromDB, UserUpdateData
+from ..models import UserRegisterData, PrivateUserFromDB, UserFromDB, UserUpdateData
 from ..__common_deps import QueryParamsDependency
 
 
 class UsersService:
     assert (collection_name := "users") in COLLECTIONS
     collection = db[collection_name]
+
        
     @classmethod
     def get_all(cls, params: QueryParamsDependency):
@@ -25,7 +26,7 @@ class UsersService:
         for user in results:
             try:
                response_dict["users"].append(
-                   PublicUserFromDB.model_validate(user).model_dump()
+                   UserFromDB.model_validate(user).model_dump()
                    ) 
             except ValidationError as e:
                 response_dict["errors"].append(f"Validation error: {e}")
@@ -58,16 +59,13 @@ class UsersService:
             return (
                 PrivateUserFromDB.model_validate(user_from_db).model_dump()
                 if with_password
-                else PublicUserFromDB.model_validate(user_from_db).model_dump()
+                else UserFromDB.model_validate(user_from_db).model_dump()
             )
         else:
             return None
 
     @classmethod
-    def create_one(
-        cls, user: UserRegisterData, hash_password: str, make_it_admin: bool = False
-    ):
-     
+    def create_one(cls, user: UserRegisterData, hash_password: str, make_it_admin: bool = False):
         existing_user = cls.get_one(
             username=user.username,
             email=user.email,
@@ -76,10 +74,13 @@ class UsersService:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail="User already exists"
             )
-            
         new_user = user.model_dump(exclude={"password"}, exclude_unset=True)
-        new_user.update(hash_password=hash_password)
-        new_user.update(created_at=datetime.now())
+        new_user.update(
+            hash_password=hash_password,
+            created_at=datetime.now(),
+            is_active=False
+            )
+  
 
         if make_it_admin:
             new_user.update(role="admin")
@@ -98,12 +99,13 @@ class UsersService:
         )
 
         if document:
-            return PublicUserFromDB.model_validate(document).model_dump()
+            return UserFromDB.model_validate(document).model_dump()
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {id} was not found."
             )
-
+    
+    
     @classmethod
     def update_password(cls, id: PydanticObjectId, hash_password: str):
         document = cls.collection.find_one_and_update(
@@ -122,7 +124,7 @@ class UsersService:
     def delete_one(cls, id: PydanticObjectId):
         document = cls.collection.find_one_and_delete({"_id": id})
         if document:
-            return PublicUserFromDB.model_validate(document).model_dump()
+            return UserFromDB.model_validate(document).model_dump()
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {id} was not found."
