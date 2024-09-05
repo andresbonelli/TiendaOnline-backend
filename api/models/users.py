@@ -4,6 +4,7 @@ __all__ = [
     "UserFromDB",
     "PrivateUserFromDB",
     "UserRegisterData",
+    "AdminRegisterData",
     "UserUpdateData",
     "UserVerifyRequest",
 ]
@@ -51,6 +52,11 @@ class UserVerifyRequest(BaseModel):
 class UserRegisterData(BaseUser):
     role: CreationRole = Field(default=CreationRole.CUSTOMER)
     password: str 
+
+class AdminRegisterData(BaseUser):
+    role: CreationRole = Field(default=CreationRole.CUSTOMER)
+    password: str 
+    is_active: bool = Field(default=True)
     
 class UserUpdateData(BaseUser):
     username: str = None
@@ -62,7 +68,7 @@ class UserUpdateData(BaseUser):
 class UserFromDB(BaseUser):
     id: PydanticObjectId = Field(validation_alias=AliasChoices("_id", "id"))
     is_active: bool | None = None
-    created_at: datetime = None
+    created_at: datetime
     modified_at: datetime | None = None
     
 class PrivateUserFromDB(UserFromDB):

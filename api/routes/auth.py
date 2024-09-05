@@ -28,6 +28,12 @@ async def verify_user_account(verify_request: UserVerifyRequest,
     user_from_db = PrivateUserFromDB.model_validate(
         users.get_one(email=verify_request.email, with_password=True)
         )
+    if user_from_db.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Account already verified"
+        )
+
     context_time: datetime = user_from_db.modified_at or user_from_db.created_at 
     context_string = f"{user_from_db.hash_password}{context_time.strftime('%d/%m/%Y,%H:%M:%S')}-verify" 
     
@@ -51,9 +57,15 @@ async def login_with_cookie(
     auth: AuthServiceDependency,
 ):
     user_from_db = users.get_one(username=user.username, with_password=True)
-    return auth.login_and_set_access_token(
-        user=user, user_from_db=user_from_db, response=response
-    )
+    if user_from_db["is_active"]:
+        return auth.login_and_set_access_token(
+            user=user, user_from_db=user_from_db, response=response
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not verified or inactive"
+        )
 
 @auth_router.get("/authenticated_user")
 async def read_current_user(security: SecurityDependency):

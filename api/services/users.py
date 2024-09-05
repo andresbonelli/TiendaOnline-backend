@@ -83,7 +83,7 @@ class UsersService:
   
 
         if make_it_admin:
-            new_user.update(role="admin")
+            new_user.update(role="admin", is_active=True)
 
         return cls.collection.insert_one(new_user) or None
 

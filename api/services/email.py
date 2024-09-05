@@ -6,8 +6,8 @@ from datetime import datetime
 
 
 async def send_account_verification_email(user: PrivateUserFromDB, background_tasks: BackgroundTasks):
-    context_time: datetime = user.modified_at or user.created_at 
-    context_string = f"{user.hash_password}{context_time.strftime('%d/%m/%Y,%H:%M:%S')}-verify" 
+    
+    context_string = f"{user.hash_password}{user.created_at.strftime('%d/%m/%Y,%H:%M:%S')}-verify" 
     token = AuthService.get_password_hash(context_string)
     activate_url = f"{FRONTEND_HOST}:{FRONTEND_PORT}/auth/account-verify?token={token}&email={user.email}"
     data = {
