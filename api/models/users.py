@@ -12,8 +12,9 @@ __all__ = [
 from pydantic import BaseModel, Field, EmailStr, AliasChoices
 from pydantic_mongo import PydanticObjectId
 from datetime import datetime
-from ..config import CountryCode
 from enum import Enum
+
+from ..config import CountryCode
 
 class CreationRole(str, Enum):
     CUSTOMER = "customer"

@@ -2,8 +2,13 @@ from datetime import datetime
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Response
 
 from ..models import UserRegisterData, UserLoginData, UserUpdateData, PrivateUserFromDB, UserVerifyRequest
-from ..services import UsersServiceDependency, AuthServiceDependency, SecurityDependency, RefreshCredentials, send_account_verification_email
-
+from ..services import (
+    UsersServiceDependency,
+    AuthServiceDependency,
+    SecurityDependency,
+    RefreshCredentials,
+    send_account_verification_email
+)
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 

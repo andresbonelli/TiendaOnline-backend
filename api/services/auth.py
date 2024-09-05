@@ -1,15 +1,13 @@
 __all__ = ["AuthServiceDependency", "SecurityDependency", "AuthService", "RefreshCredentials"]
 
-from typing import Annotated
-
 from fastapi import Depends, HTTPException, Response, Security, status
 from fastapi_jwt import JwtAccessBearerCookie, JwtAuthorizationCredentials, JwtRefreshBearer
 from fastapi.encoders import jsonable_encoder
-
 from passlib.context import CryptContext
+from typing import Annotated
 
 from ..config import access_token_exp, refresh_token_exp, SECRET_KEY, REFRESH_KEY
-from ..models import UserLoginData,UserFromDB, UserVerifyRequest
+from ..models import UserFromDB
 
 access_security = JwtAccessBearerCookie(secret_key=SECRET_KEY, access_expires_delta=access_token_exp, auto_error=True)
 refresh_security = JwtRefreshBearer(secret_key=REFRESH_KEY, auto_error=True)
@@ -17,7 +15,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 AuthCredentials = Annotated[JwtAuthorizationCredentials, Security(access_security)]
 RefreshCredentials = Annotated[JwtAuthorizationCredentials, Security(refresh_security)]
-
 
 class AuthService:  
     @staticmethod

@@ -1,18 +1,16 @@
 __all__ = ["UsersServiceDependency", "UsersService"]
 
 
-from typing import Annotated
-
 from fastapi import Depends, HTTPException, status
-from pydantic_mongo import PydanticObjectId
 from pydantic import EmailStr
+from pydantic_mongo import PydanticObjectId
 from pydantic_core import ValidationError
+from typing import Annotated
 from datetime import datetime
 
 from ..config import COLLECTIONS, db
 from ..models import UserRegisterData, PrivateUserFromDB, UserFromDB, UserUpdateData
 from ..__common_deps import QueryParamsDependency
-
 
 class UsersService:
     assert (collection_name := "users") in COLLECTIONS

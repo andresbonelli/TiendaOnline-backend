@@ -7,7 +7,6 @@ from ..__common_deps import QueryParamsDependency
 
 users_router = APIRouter(prefix="/Users", tags=["Users"])
 
-
 @users_router.get("/")
 def get_all_users(users: UsersServiceDependency, params: QueryParamsDependency, security: SecurityDependency):
     """

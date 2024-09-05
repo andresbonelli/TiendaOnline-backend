@@ -6,7 +6,6 @@ from fastapi.templating import Jinja2Templates
 from .api.config import allowed_origins, APP_TITLE
 from .api.routes import api_router, auth_router 
 
-
 app = FastAPI(title=APP_TITLE)
 
 # Include our API routes

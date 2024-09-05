@@ -5,7 +5,6 @@ from pydantic_mongo import PydanticObjectId
 from datetime import datetime
 from enum import Enum 
 
-
 class OrderStatus(str, Enum):
     pending = "pending"
     completed = "completed"

@@ -1,17 +1,14 @@
 __all__ = ["ProductsServiceDependency", "ProductsService"]
 
-from typing import Annotated
-
 from fastapi import Depends, HTTPException, status
 from pydantic_mongo import PydanticObjectId
 from pydantic_core import ValidationError
-
+from typing import Annotated
 from datetime import datetime
 
 from ..config import COLLECTIONS, db
 from ..models import BaseProduct, ProductCreateData, ProductUpdateData, ProductFromDB 
 from ..__common_deps import QueryParamsDependency, SearchEngineDependency
-
 
 class ProductsService:
     """

@@ -2,8 +2,6 @@ from fastapi.background import BackgroundTasks
 from ..models import PrivateUserFromDB
 from ..config import send_email, FRONTEND_HOST, FRONTEND_PORT, APP_TITLE
 from ..services import AuthService
-from datetime import datetime
-
 
 async def send_account_verification_email(user: PrivateUserFromDB, background_tasks: BackgroundTasks):
     

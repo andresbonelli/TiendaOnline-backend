@@ -1,10 +1,10 @@
 __all__ = ["QueryParamsDependency", "QueryParams", "SearchEngineDependency", "SearchEngine"]
 
-from dataclasses import dataclass
-from typing import Annotated, Literal
 from fastapi import Depends
 from pymongo.collection import Collection
 from pymongo.cursor import Cursor
+from typing import Annotated, Literal
+from dataclasses import dataclass
 
 op_map = {
     ">=": "$gte",

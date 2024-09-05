@@ -1,9 +1,10 @@
 __all__ = ["send_email"]
 
-from pathlib import Path
-from fastapi.background import BackgroundTasks
 from fastapi_mail import FastMail, ConnectionConfig, MessageSchema, MessageType
+from fastapi.background import BackgroundTasks
 from typing import List
+from pathlib import Path
+
 from .__base import APP_TITLE, MAIL_FROM, MAIL_PASSWORD, MAIL_PORT, MAIL_SERVER, MAIL_USERNAME
 
 conf = ConnectionConfig(

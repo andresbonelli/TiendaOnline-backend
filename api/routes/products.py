@@ -5,13 +5,11 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from pydantic_mongo import PydanticObjectId
 
-
 from ..models import BaseProduct, ProductUpdateData
 from ..services import ProductsServiceDependency, SecurityDependency
 from ..__common_deps import QueryParamsDependency, SearchEngineDependency
 
 products_router = APIRouter(prefix="/products", tags=["Products"])
-
 
 @products_router.get("/")
 async def list_products(products: ProductsServiceDependency, params: QueryParamsDependency):

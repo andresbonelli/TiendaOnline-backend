@@ -1,15 +1,13 @@
 __all__ = ["OrdersServiceDependency", "OrdersService"]
 
-from typing import Annotated
-
 from fastapi import Depends, HTTPException, status
 from pydantic_mongo import PydanticObjectId
+from typing import Annotated
 from datetime import datetime
 
 from ..__common_deps import QueryParamsDependency
 from ..config import COLLECTIONS, db
 from ..models import OrderUpdateData, OrderCreateData, OrderFromDB
-
 
 class OrdersService:
     assert (collection_name := "orders") in COLLECTIONS

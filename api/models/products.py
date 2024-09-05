@@ -7,10 +7,8 @@ __all__ = [
 
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
-from typing import List, Optional
 from datetime import datetime
 from enum import Enum
-
 
 class Details(BaseModel):
     pass
@@ -25,13 +23,11 @@ class BaseProduct(BaseModel):
     image: str | None = None
     category: str | None = None  #Enum
     details: Details | None = None
-    tags: List[str] | None = None
-
+    tags: list[str] | None = None
 
 class ProductCreateData(BaseProduct):
     staff_id: PydanticObjectId
     created_at: datetime = Field(default_factory=datetime.now)
-
     
 class ProductUpdateData(BaseProduct):
     name: str | None = None
@@ -40,16 +36,19 @@ class ProductUpdateData(BaseProduct):
     stock: int | None = Field(ge=0, default=None)
     sales_count: int | None = Field(ge=0, default=None)
 
-
-  
 class ProductFromDB(BaseProduct):
     id: PydanticObjectId = Field(alias="_id")
-    staff_id: PydanticObjectId | None = None
-    modified_at: datetime | None = None
+    staff_id: PydanticObjectId
     created_at: datetime
+    modified_at: datetime | None = None
     
-class PrivateProductFromDB(BaseProduct):
-    pass
+class DeletedProductFromDB(BaseProduct):
+    id: PydanticObjectId = Field(alias="_id")
+    staff_id: PydanticObjectId
+    created_at: datetime
+    modified_at: datetime | None = None
+    deleted_at: datetime
+    
     
     
 
