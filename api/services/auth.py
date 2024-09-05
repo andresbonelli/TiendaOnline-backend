@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from passlib.context import CryptContext
 
 from ..config import access_token_exp, refresh_token_exp, SECRET_KEY, REFRESH_KEY
-from ..models import UserLoginData,PublicUserFromDB
+from ..models import UserLoginData,UserFromDB, UserVerifyRequest
 
 access_security = JwtAccessBearerCookie(secret_key=SECRET_KEY, access_expires_delta=access_token_exp, auto_error=True)
 refresh_security = JwtRefreshBearer(secret_key=REFRESH_KEY, auto_error=True)
@@ -27,19 +27,17 @@ class AuthService:
     @staticmethod
     def get_password_hash(password):
         return pwd_context.hash(password)
-
+    
     def login_and_set_access_token(
-        self, user_from_db: dict | None, user: UserLoginData, response: Response
+        self, user_from_db: dict | None, password: str, response: Response
     ):
-        if not user_from_db or not self.verify_password(
-            user.password, user_from_db.get("hash_password")
-        ):
+        if not self.verify_password(password, user_from_db.get("hash_password")):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found or credentials incorrect",
+                detail="Incorrect Credentials",
             )
 
-        userdata = PublicUserFromDB.model_validate(user_from_db).model_dump()
+        userdata = UserFromDB.model_validate(user_from_db).model_dump()
         access_token = access_security.create_access_token(
             subject=jsonable_encoder(userdata), expires_delta=access_token_exp
         )
@@ -50,6 +48,7 @@ class AuthService:
         refresh_security.set_refresh_cookie(response, refresh_token)
 
         return {"access_token": access_token, "refresh_token": refresh_token}
+    
 
     @classmethod
     def refresh_access_token(cls, response: Response, refresh: RefreshCredentials):
@@ -73,6 +72,7 @@ class SecurityService:
         self.auth_user_role = credentials.subject.get("role")  
         self.auth_user_created_at = credentials.subject.get("created_at")
         self.auth_user_modified_at = credentials.subject.get("modified_at")
+        self.auth_user_is_active = credentials.subject.get("is_active")
         self.auth_user_address: list = credentials.subject.get("address")
         
     @property
@@ -88,7 +88,11 @@ class SecurityService:
     def is_customer(self):
         role = self.auth_user_role
         return role == "admin" or role == "customer"
-
+    
+    @property
+    def is_active(self):
+        return self.auth_user_is_active
+        
     @property
     def is_admin_or_raise(self):
         if self.auth_user_role != "admin":

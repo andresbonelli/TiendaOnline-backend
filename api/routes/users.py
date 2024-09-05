@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic_mongo import PydanticObjectId
 
-from ..models import UserRegisterData, UserUpdateData
+from ..models import UserUpdateData, AdminRegisterData
 from ..services import UsersServiceDependency, AuthServiceDependency, SecurityDependency
 from ..__common_deps import QueryParamsDependency
 
@@ -31,7 +31,7 @@ def get_one_user_by_id(id: PydanticObjectId, users: UsersServiceDependency, secu
             )
 
 @users_router.post("/")
-def create_user(user: UserRegisterData, users: UsersServiceDependency, auth: AuthServiceDependency, security: SecurityDependency):
+def create_user(user: AdminRegisterData, users: UsersServiceDependency, auth: AuthServiceDependency, security: SecurityDependency):
     """
     Admins only!
     """
