@@ -51,7 +51,6 @@ class OrdersService:
         lookup = {"$lookup": {
             "from": "products", "as": "products_result", "localField": "products.product_id", "foreignField": "_id" 
         }}
-        unwind = {"$unwind": "$products_result"}
         matches = {"$match": {"products_result.staff_id": staff_id}}
         cursor = cls.collection.aggregate([lookup, matches])
         return [OrderFromDB.model_validate(order).model_dump() for order in cursor]
