@@ -38,49 +38,22 @@ class OrdersService:
     
     @classmethod
     def find_from_customer_id(cls, id: PydanticObjectId):
-        if cursor := cls.collection.find({"customer_id": id}):
-            return [OrderFromDB.model_validate(order).model_dump() for order in cursor]
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=f"Orders from customer {id} not found"
-            )
-            
+        cursor = cls.collection.find({"customer_id": id})
+        return [OrderFromDB.model_validate(order).model_dump() for order in cursor]
+         
     @classmethod
     def find_from_product_id(cls, id: PydanticObjectId):
-        """
-        WARNING: Expensive search!
-        """
-        unwind = {"$unwind": "$products"}
-        lookup = {"$lookup": {
-            "from": "products", "as": "products_result", "localField": "products.product_id", "foreignField": "_id" 
-        }}
-        matches = {"$match": {"products_result._id": id}}
-        group = {
-            "$group": {
-                "_id": "$_id",
-                "customer_id": {"$first": "$customer_id"},
-                "created_at": {"$first": "$created_at"},
-                "total_price": {"$first": "$total_price"},
-                "status": {"$first": "$status"},
-                "modified_at": {"$first": "$modified_at"},
-                "products": {"$push": "$products"}
-            }
-        }
-        cursor = cls.collection.aggregate([unwind,lookup,matches, group])
+        cursor = cls.collection.find({"products.product_id": id})
         return [OrderFromDB.model_validate(order).model_dump() for order in cursor]
-
+       
     @classmethod
     def find_from_staff_id(cls, staff_id: PydanticObjectId): 
-        """
-        WARNING: Expensive search!
-        """ 
-        unwind = {"$unwind": "$products"}
         lookup = {"$lookup": {
             "from": "products", "as": "products_result", "localField": "products.product_id", "foreignField": "_id" 
         }}
         unwind = {"$unwind": "$products_result"}
         matches = {"$match": {"products_result.staff_id": staff_id}}
-        cursor = cls.collection.aggregate([lookup, unwind, matches])
+        cursor = cls.collection.aggregate([lookup, matches])
         return [OrderFromDB.model_validate(order).model_dump() for order in cursor]
     
     @classmethod

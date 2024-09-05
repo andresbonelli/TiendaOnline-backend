@@ -29,14 +29,12 @@ class AuthService:
         return pwd_context.hash(password)
     
     def login_and_set_access_token(
-        self, user_from_db: dict | None, user: UserLoginData, response: Response
+        self, user_from_db: dict | None, password: str, response: Response
     ):
-        if not user_from_db or not self.verify_password(
-            user.password, user_from_db.get("hash_password")
-        ):
+        if not self.verify_password(password, user_from_db.get("hash_password")):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found or credentials incorrect",
+                detail="Incorrect Credentials",
             )
 
         userdata = UserFromDB.model_validate(user_from_db).model_dump()

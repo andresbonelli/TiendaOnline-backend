@@ -48,7 +48,6 @@ async def verify_user_account(verify_request: UserVerifyRequest,
             detail="Link expired or invalid"
         )
 
-
 @auth_router.post("/login")
 async def login_with_cookie(
     user: UserLoginData,
@@ -57,15 +56,12 @@ async def login_with_cookie(
     auth: AuthServiceDependency,
 ):
     user_from_db = users.get_one(username=user.username, with_password=True)
-    if user_from_db["is_active"]:
-        return auth.login_and_set_access_token(
-            user=user, user_from_db=user_from_db, response=response
-        )
-    else:
+    if not user_from_db or not user_from_db["is_active"]:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not verified or inactive"
-        )
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User does not exist or inactive"
+            )
+    return auth.login_and_set_access_token(password=user.password, user_from_db=user_from_db, response=response)
 
 @auth_router.get("/authenticated_user")
 async def read_current_user(security: SecurityDependency):
