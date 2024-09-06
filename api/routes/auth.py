@@ -19,9 +19,12 @@ async def register(user: UserRegisterData,
                    background_tasks: BackgroundTasks):
     hash_password = auth.get_password_hash(user.password)
     result = users.create_one(user, hash_password)
-    fresh_user = users.get_one(id=result.inserted_id, with_password=True)
+    new_user = users.get_one(id=result.inserted_id, with_password=True)
     
-    await send_account_verification_email(PrivateUserFromDB.model_validate(fresh_user), background_tasks=background_tasks)
+    await send_account_verification_email(
+        PrivateUserFromDB.model_validate(new_user),
+        background_tasks=background_tasks
+    )
     
     return {"result message": f"User created with id: {result.inserted_id}"}
 

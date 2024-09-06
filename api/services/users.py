@@ -76,12 +76,9 @@ class UsersService:
         new_user.update(
             hash_password=hash_password,
             created_at=datetime.now(),
-            is_active=False
-            )
-  
-
-        if make_it_admin:
-            new_user.update(role="admin", is_active=True)
+            is_active=True if make_it_admin else False,
+            role="admin" if make_it_admin else new_user["role"]
+        )
 
         return cls.collection.insert_one(new_user) or None
 
