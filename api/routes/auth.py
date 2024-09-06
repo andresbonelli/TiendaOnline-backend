@@ -121,7 +121,7 @@ async def user_forgot_password(email: EmailStr, users: UsersServiceDependency, b
     )
     return JSONResponse({"message": f"An email with password reset link has been sent to {email}"})
 
-@auth_router.post("/reset-password", status_code=status.HTTP_200_OK)
+@auth_router.put("/reset-password", status_code=status.HTTP_200_OK)
 async def user_reset_password(
     verify_request: UserResetPasswordRequest,
     auth: AuthServiceDependency,
