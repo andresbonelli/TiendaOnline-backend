@@ -1,5 +1,7 @@
 from datetime import datetime
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Response
+from fastapi.responses import JSONResponse
+from pydantic import EmailStr
 
 from ..models import UserRegisterData, UserLoginData, UserUpdateData, PrivateUserFromDB, UserVerifyRequest
 from ..services import (
@@ -7,17 +9,20 @@ from ..services import (
     AuthServiceDependency,
     SecurityDependency,
     RefreshCredentials,
-    send_account_verification_email
+    send_account_verification_email,
+    send_reset_password_email
 )
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 
-@auth_router.post("/register")
+@auth_router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(user: UserRegisterData,
                    users: UsersServiceDependency,
                    auth: AuthServiceDependency,
                    background_tasks: BackgroundTasks):
+    user.role = "customer"
     hash_password = auth.get_password_hash(user.password)
+    
     result = users.create_one(user, hash_password)
     new_user = users.get_one(id=result.inserted_id, with_password=True)
     
@@ -28,7 +33,7 @@ async def register(user: UserRegisterData,
     
     return {"result message": f"User created with id: {result.inserted_id}"}
 
-@auth_router.post("/verify")
+@auth_router.post("/verify", status_code=status.HTTP_200_OK)
 async def verify_user_account(verify_request: UserVerifyRequest,
                               users: UsersServiceDependency,
                               auth: AuthServiceDependency,
@@ -56,7 +61,7 @@ async def verify_user_account(verify_request: UserVerifyRequest,
             detail="Link expired or invalid"
         )
 
-@auth_router.post("/login")
+@auth_router.post("/login", status_code=status.HTTP_200_OK)
 async def login_with_cookie(
     user: UserLoginData,
     response: Response,
@@ -71,7 +76,7 @@ async def login_with_cookie(
             )
     return auth.login_and_set_access_token(password=user.password, user_from_db=user_from_db, response=response)
 
-@auth_router.get("/authenticated_user")
+@auth_router.get("/authenticated_user", status_code=status.HTTP_200_OK)
 async def read_current_user(security: SecurityDependency):
     return dict(
         id=security.auth_user_id,
@@ -84,6 +89,20 @@ async def read_current_user(security: SecurityDependency):
         address=security.auth_user_address
     )
 
-@auth_router.post("/refresh")
+@auth_router.post("/refresh", status_code=status.HTTP_200_OK)
 async def refresh_credentials(response: Response, auth: AuthServiceDependency, refresh: RefreshCredentials):
     return auth.refresh_access_token(response, refresh)
+
+@auth_router.post("/forgot-password", status_code=status.HTTP_200_OK)
+async def reset_user_password(email: EmailStr, users: UsersServiceDependency, background_tasks: BackgroundTasks):
+    user_from_db = users.get_one(email=email, with_password=True)
+    if not user_from_db or not user_from_db["is_active"]:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User does not exist or inactive"
+            )
+    await send_reset_password_email(
+        PrivateUserFromDB.model_validate(user_from_db),
+        background_tasks=background_tasks
+    )
+    return JSONResponse({"message": f"An email with password reset link has been sent to {email}"})
