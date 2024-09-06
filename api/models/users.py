@@ -7,6 +7,7 @@ __all__ = [
     "AdminRegisterData",
     "UserUpdateData",
     "UserVerifyRequest",
+    "UserResetPasswordRequest",
 ]
 
 from pydantic import BaseModel, Field, EmailStr, AliasChoices
@@ -49,6 +50,9 @@ class UserLoginData(BaseModel):
 class UserVerifyRequest(BaseModel):
     token: str
     email: EmailStr
+
+class UserResetPasswordRequest(UserVerifyRequest):
+    new_password: str
     
 class UserRegisterData(BaseUser):
     role: CreationRole = Field(default=CreationRole.CUSTOMER)

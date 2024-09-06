@@ -33,7 +33,7 @@ async def send_reset_password_email(user: PrivateUserFromDB, background_tasks: B
         "name": user.username,
         "activate_url": reset_password_url
     }
-    subject = f"Account Verification - {APP_TITLE}"
+    subject = f"Reset Password - {APP_TITLE}"
     await send_email(
         recipients=[user.email],
         subject=subject,
