@@ -1,6 +1,7 @@
 __all__ = ["OrdersServiceDependency", "OrdersService"]
 
 from fastapi import Depends, HTTPException, status
+from pydantic_core import ValidationError
 from pydantic_mongo import PydanticObjectId
 from typing import Annotated
 from datetime import datetime
@@ -15,10 +16,17 @@ class OrdersService:
 
     @classmethod
     def get_all(cls, params: QueryParamsDependency):
-        return [
-            OrderFromDB.model_validate(order).model_dump()
-            for order in params.query_collection(cls.collection)
-        ]
+        response_dict = {"orders": [], "errors": []}
+        results = params.query_collection(cls.collection)
+        for order in results:
+            try:
+               response_dict["orders"].append(
+                   OrderFromDB.model_validate(order).model_dump()
+                   ) 
+            except ValidationError as e:
+                response_dict["errors"].append(f"Validation error: {e}")
+               
+        return response_dict
 
     @classmethod
     def get_one(cls, id: PydanticObjectId):
