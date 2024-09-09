@@ -105,7 +105,7 @@ class UsersService:
     def update_password(cls, id: PydanticObjectId, hash_password: str):
         document = cls.collection.find_one_and_update(
             {"_id": id},
-            {"$set": {"hash_password": hash_password, "modified_at": str(datetime.now())}},
+            {"$set": {"hash_password": hash_password, "modified_at": datetime.now()}},
             return_document=True,
         )
         if document:
