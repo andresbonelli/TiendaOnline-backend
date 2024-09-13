@@ -2,27 +2,31 @@ __all__ = [
     "BaseProduct",
     "ProductCreateData",
     "ProductUpdateData",
-    "ProductFromDB"
+    "ProductFromDB",
+    "DeletedProductFromDB"
     ]
 
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
 from datetime import datetime
-from enum import Enum
+from ..config.constants import Size, Category
 
-class Details(BaseModel):
-    pass
-    # TODO: add custom details
+
+class ProductDetails(BaseModel):
+    image_list: list[str] | None = None
+    sizes: list[Size] | None = None
+    long_description: str | None = None
 
 class BaseProduct(BaseModel):
     name: str
     description: str
     price: float = Field(ge=0)
+    old_price: float | None = None
     stock: int = Field(ge=0)
     sku: str | None = None
     image: str | None = None
-    category: str | None = None  #Enum
-    details: Details | None = None
+    category: Category | None = None 
+    details: ProductDetails | None = None
     tags: list[str] | None = None
 
 class ProductCreateData(BaseProduct):
@@ -39,14 +43,11 @@ class ProductUpdateData(BaseProduct):
 class ProductFromDB(BaseProduct):
     id: PydanticObjectId = Field(alias="_id")
     staff_id: PydanticObjectId
+    sales_count: int | None = None
     created_at: datetime
     modified_at: datetime | None = None
     
-class DeletedProductFromDB(BaseProduct):
-    id: PydanticObjectId = Field(alias="_id")
-    staff_id: PydanticObjectId
-    created_at: datetime
-    modified_at: datetime | None = None
+class DeletedProductFromDB(ProductFromDB):
     deleted_at: datetime
     
     

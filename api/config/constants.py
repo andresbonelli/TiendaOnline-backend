@@ -1,6 +1,25 @@
-__all__ = ["CountryCode"]
+__all__ = ["CountryCode", "Size", "Category"]
 
 from enum import Enum
+
+class Size(str, Enum):
+    XSMALL = "xs"
+    SMALL = "s"
+    MEDIUM = "m"
+    LARGE = "l"
+    XLARGE = "xl"
+    XXLARGE = "xxl"
+    XXXLARGE = "3xl"
+    
+class Category(str, Enum):
+    ELECTRONICS = "electronics"
+    GROCERY = "grocery"
+    SPORTS  = "sports"
+    HOME_APPLIANCES = "home_appliances"
+    CLOTHING = "clothing"
+    GAMES = "games"
+    OFFICE = "office"
+    AUTOMOTIVE = "automotive"
 
 class CountryCode(list[str, str], Enum):
     AFGHANISTAN = ["AFG", "004"]
