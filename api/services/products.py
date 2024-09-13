@@ -75,8 +75,9 @@ class ProductsService:
         
     @classmethod
     def create_one(cls, product: BaseProduct, staff_id: PydanticObjectId):
-    
-        if cls.collection.find_one({"sku": product.sku}):
+        
+        # Check if product already exist in database. 
+        if product.sku and cls.collection.find_one({"sku": product.sku}):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail=f"Product already exists"
             )
