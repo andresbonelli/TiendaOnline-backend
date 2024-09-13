@@ -40,7 +40,7 @@ def get_filter_query(filter_item: str):
 @dataclass
 class QueryParams:
     filter: str = ""
-    limit: int = 50
+    limit: int = 20
     offset: int = 0
     sort_by: str = "_id"
     sort_dir: Literal["asc", "desc"] = "asc"

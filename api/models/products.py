@@ -21,7 +21,7 @@ class BaseProduct(BaseModel):
     name: str
     description: str
     price: float = Field(ge=0)
-    old_price: float | None = None
+    old_price: float | None = Field(ge=0, default=None)
     stock: int = Field(ge=0)
     sku: str | None = None
     image: str | None = None

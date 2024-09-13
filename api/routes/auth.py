@@ -2,6 +2,7 @@ from datetime import datetime
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Response
 from fastapi.responses import JSONResponse
 from pydantic import EmailStr
+from passlib.exc import UnknownHashError
 
 from ..models import (
     UserRegisterData,
@@ -59,18 +60,23 @@ async def verify_user_account(
 
     context_time: datetime = user_from_db.modified_at or user_from_db.created_at 
     context_string = f"{user_from_db.hash_password}{context_time.strftime('%d/%m/%Y,%H:%M:%S')}-verify" 
-    
-    if auth.verify_password(context_string, verify_request.token):
-        return users.update_one(
-            user_from_db.id,
-            UserUpdateData(is_active=True)
+    try:
+        if auth.verify_password(context_string, verify_request.token):
+            return users.update_one(
+                user_from_db.id,
+                UserUpdateData(is_active=True)
+                )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Link expired or invalid"
             )
-    else:
+    except UnknownHashError:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Link expired or invalid"
-        )
-
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Not a valid token"
+            )
+        
 @auth_router.post("/login", status_code=status.HTTP_200_OK)
 async def login_with_cookie(
     user: UserLoginData,
@@ -138,13 +144,19 @@ async def user_reset_password(
         
     context_string = f"{user_from_db.hash_password}{user_from_db.modified_at.strftime('%d/%m/%Y,%H:%M:%S')}-reset-password" 
     
-    if auth.verify_password(context_string, verify_request.token):
-        return users.update_password(
-            user_from_db.id,
-            auth.get_password_hash(verify_request.new_password)
+    try:
+        if auth.verify_password(context_string, verify_request.token):
+            return users.update_password(
+                user_from_db.id,
+                auth.get_password_hash(verify_request.new_password)
+                )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Link expired or invalid"
             )
-    else:
+    except UnknownHashError:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Link expired or invalid"
-        )
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Not a valid token"
+            )
