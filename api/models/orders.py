@@ -1,4 +1,4 @@
-__all__ = ["BaseOrder", "OrderFromDB", "OrderCreateData", "OrderUpdateData", "OrderStatus"]
+__all__ = ["BaseOrder", "OrderFromDB", "OrderCreateData", "OrderUpdateData", "OrderStatus", "OrderProduct"]
 
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
@@ -12,7 +12,7 @@ class OrderStatus(str, Enum):
     
 class OrderProduct(BaseModel):
     product_id: PydanticObjectId
-    quantity: int
+    quantity: int = Field(gt=0)
 
 class BaseOrder(BaseModel):
     products: list[OrderProduct]

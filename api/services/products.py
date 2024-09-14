@@ -7,7 +7,7 @@ from typing import Annotated
 from datetime import datetime
 
 from ..config import COLLECTIONS, db
-from ..models import BaseProduct, ProductCreateData, ProductUpdateData, ProductFromDB 
+from ..models import BaseProduct, ProductCreateData, ProductUpdateData, ProductFromDB, OrderProduct
 from ..__common_deps import QueryParamsDependency, SearchEngineDependency
 
 class ProductsService:
@@ -117,6 +117,35 @@ class ProductsService:
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"Product with id {id} not found"
+            )
+            
+    @classmethod
+    def check_stock(cls, order_products: list[OrderProduct]) -> None:
+        for product in order_products:
+            existing_product = cls.get_one(product.product_id)
+            if existing_product.get("stock", 0) <= product.quantity:
+                raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail=f"Product {product.product_id} is out of stock"
+                    )
+    
+    @classmethod
+    def check_and_update_stock(cls, order_products: list[OrderProduct]) -> None:
+        for product in order_products:
+            existing_product = cls.get_one(product.product_id)
+            if existing_product.get("stock", 0) <= product.quantity:
+                raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail=f"Product {product.product_id} is out of stock"
+                    )
+            product_to_update = ProductUpdateData(
+                stock=existing_product.get("stock", 0) - product.quantity,
+                sales_count=existing_product.get("sales_count", 0) + product.quantity,
+                modified_at=datetime.now()
+                )
+            cls.update_one(
+                product.product_id,
+                product_to_update,
             )
 
 ProductsServiceDependency = Annotated[ProductsService, Depends()]        

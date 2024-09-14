@@ -6,7 +6,7 @@ from pydantic_mongo import PydanticObjectId
 from datetime import datetime
 
 from ..__common_deps import QueryParamsDependency
-from ..models import BaseOrder, OrderStatus, ProductUpdateData, OrderUpdateData
+from ..models import BaseOrder, OrderStatus, OrderUpdateData
 from ..services import (
     OrdersServiceDependency,
     ProductsServiceDependency,
@@ -33,7 +33,7 @@ def get_order_by_id(id: PydanticObjectId, security: SecurityDependency, orders: 
     Staff members and admins only!
     """
     security.is_staff_or_raise
-    return orders.get_one(id)
+    return orders.get_one(id).model_dump()
 
 @orders_router.get("/get_by_customer/{id}")
 def get_orders_by_customer_id(
@@ -78,15 +78,8 @@ def create_order(
     """
     security.is_customer_or_raise
     
-    for product in order.products:
-        existing_product = products.get_one(product.product_id)
-        if existing_product.get("stock", 0) <= product.quantity:
-            raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail=f"Product {product.product_id} is out of stock"
-                ) 
-    
-    #Prepare Order
+    #Prepare Order and store in database
+    products.check_stock(order.products)
     new_order: dict = {
         "customer_id": PydanticObjectId(security.auth_user_id),
         "products": [
@@ -99,22 +92,7 @@ def create_order(
         "status": OrderStatus.pending,
         "created_at": datetime.now()
     }
-    
-    #Store Order in database
     result = orders.create_one(new_order)
-    
-    #Update product stock
-    for product in new_order["products"]:
-        existing_product = products.get_one(product["product_id"])
-        product_to_update = ProductUpdateData(
-            stock=existing_product["stock"] - product["quantity"],
-            modified_at=datetime.now()
-            )
-        products.update_one(
-            product["product_id"],
-            product_to_update,
-        )
-    
     if result.acknowledged:
         return {"result message": f"Order created with id: {result.inserted_id}"}
     else:
@@ -125,16 +103,20 @@ def create_order(
 
 @orders_router.patch("/complete/{id}")
 def complete_order(
-    id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
+    id: PydanticObjectId,
+    security: SecurityDependency,
+    orders: OrdersServiceDependency,
+    products: ProductsServiceDependency
 ):
     """
     Authenticated customer only!
     """
     existing_order = orders.get_one(id)
+    security.check_user_permission(str(existing_order.customer_id))
     
-    security.check_user_permission(existing_order["customer_id"])
-    
-    if existing_order["status"] == OrderStatus.pending:
+    if existing_order.status == OrderStatus.pending:
+        # Update product stock and sales count
+        products.check_and_update_stock(existing_order.products)
         total_price = orders.calculate_total_price(id)
         result = orders.update_one(id, OrderUpdateData(
             status=OrderStatus.completed,
@@ -144,7 +126,7 @@ def complete_order(
     else:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot complete order {id} with status {existing_order["status"]}"
+            detail=f"Cannot complete order {id} with status {existing_order.status}"
         )
     
 @orders_router.patch("/cancel/{id}")
@@ -155,14 +137,13 @@ def cancel_order(
     Authenticated customer only!
     """
     existing_order = orders.get_one(id)
+    security.check_user_permission(str(existing_order.customer_id))
     
-    security.check_user_permission(existing_order["customer_id"])
-    
-    if existing_order["status"] == OrderStatus.pending:
+    if existing_order.status == OrderStatus.pending:
         result = orders.update_one(id, OrderUpdateData(status=OrderStatus.cancelled))
         return {"message": "Order cancelled!","Cancelled order": result}
     else:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot cancel order {id} with status {existing_order["status"]}"
+            detail=f"Cannot cancel order {id} with status {existing_order.status}"
         )

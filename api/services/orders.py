@@ -1,14 +1,14 @@
 __all__ = ["OrdersServiceDependency", "OrdersService"]
 
 from fastapi import Depends, HTTPException, status
-from pydantic_core import ValidationError
 from pydantic_mongo import PydanticObjectId
+from pydantic_core import ValidationError
 from typing import Annotated
 from datetime import datetime
 
 from ..__common_deps import QueryParamsDependency
 from ..config import COLLECTIONS, db
-from ..models import OrderUpdateData, OrderCreateData, OrderFromDB
+from ..models import OrderFromDB, OrderCreateData, OrderUpdateData
 
 class OrdersService:
     assert (collection_name := "orders") in COLLECTIONS
@@ -31,7 +31,7 @@ class OrdersService:
     @classmethod
     def get_one(cls, id: PydanticObjectId):
         if order_from_db := cls.collection.find_one({"_id": id}):
-            return OrderFromDB.model_validate(order_from_db).model_dump()
+            return OrderFromDB.model_validate(order_from_db)
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Order not found"
@@ -66,13 +66,11 @@ class OrdersService:
         modified_order: dict = order.model_dump(exclude_unset=True, exclude_none=True)
         modified_order.update(modified_at=datetime.now()) 
     
-        document = cls.collection.find_one_and_update(
+        if document := cls.collection.find_one_and_update(
                 {"_id": order_id},
                 {"$set": modified_order},
                 return_document=True,
-            )
-
-        if document:
+            ):
             return OrderFromDB.model_validate(document).model_dump()
         else:
             raise HTTPException(
