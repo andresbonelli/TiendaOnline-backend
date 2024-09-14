@@ -29,8 +29,7 @@ class ProductsService:
                    ProductFromDB.model_validate(product).model_dump()
                    ) 
             except ValidationError as e:
-                response_dict["errors"].append(f"Validation error: {e}")
-               
+                response_dict["errors"].append(f"Validation error: {e}")      
         return response_dict
         
     @classmethod
@@ -43,8 +42,7 @@ class ProductsService:
                    ProductFromDB.model_validate(product).model_dump()
                    ) 
             except ValidationError as e:
-                response_dict["errors"].append(f"Validation error: {e}")
-               
+                response_dict["errors"].append(f"Validation error: {e}")    
         return response_dict
     
     @classmethod
@@ -59,7 +57,7 @@ class ProductsService:
             except ValidationError as e:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Validation error while reading product: {e}"
+                    detail=f"Validation error while fetching product: {e}"
                 )
         else:
             raise HTTPException(
@@ -89,8 +87,7 @@ class ProductsService:
         return cls.collection.insert_one(new_product) or None
     
     @classmethod
-    def update_one(cls, id: PydanticObjectId, product: ProductUpdateData):
-             
+    def update_one(cls, id: PydanticObjectId, product: ProductUpdateData):  
         modified_product: dict = product.model_dump(exclude_unset=True)
         modified_product.update(modified_at=datetime.now())
 

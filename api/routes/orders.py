@@ -16,11 +16,7 @@ from ..services import (
 orders_router = APIRouter(prefix="/orders", tags=["Orders"])
 
 @orders_router.get("/get_all")
-def get_all_orders(
-    orders: OrdersServiceDependency,
-    security: SecurityDependency,
-    params: QueryParamsDependency,
-):
+async def get_all_orders(orders: OrdersServiceDependency, security: SecurityDependency, params: QueryParamsDependency):
     """
     Admins only!
     """
@@ -28,7 +24,7 @@ def get_all_orders(
     return orders.get_all(params)
 
 @orders_router.get("/{id}")
-def get_order_by_id(id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency):
+async def get_order_by_id(id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency):
     """
     Staff members and admins only!
     """
@@ -36,9 +32,7 @@ def get_order_by_id(id: PydanticObjectId, security: SecurityDependency, orders: 
     return orders.get_one(id).model_dump()
 
 @orders_router.get("/get_by_customer/{id}")
-def get_orders_by_customer_id(
-    id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
-):
+async def get_orders_by_customer_id(id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency):
     """
     Authenticated customer only!
     """
@@ -46,9 +40,7 @@ def get_orders_by_customer_id(
     return orders.find_from_customer_id(id)
   
 @orders_router.get("/get_by_product/{id}")
-def get_orders_by_product_id(
-    id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
-):
+async def get_orders_by_product_id(id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency):
     """
     Staff members and admins only!
     """
@@ -56,9 +48,7 @@ def get_orders_by_product_id(
     return orders.find_from_product_id(id)
 
 @orders_router.get("/get_by_staff/{id}")
-def get_orders_by_staff_id(
-    id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
-):
+async def get_orders_by_staff_id(id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency):
     """
     Authenticated staff member only!
     """
@@ -67,7 +57,7 @@ def get_orders_by_staff_id(
 
 # Purchase order (multiple products). 
 @orders_router.post("/")
-def create_order(
+async def create_order(
     order: BaseOrder,
     orders: OrdersServiceDependency,
     products: ProductsServiceDependency,
@@ -103,7 +93,7 @@ def create_order(
             )
 
 @orders_router.patch("/complete/{id}")
-def complete_order(
+async def complete_order(
     id: PydanticObjectId,
     security: SecurityDependency,
     orders: OrdersServiceDependency,
@@ -131,9 +121,7 @@ def complete_order(
         )
     
 @orders_router.patch("/cancel/{id}")
-def cancel_order(
-    id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency
-):
+async def cancel_order(id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency):
     """
     Authenticated customer only!
     """

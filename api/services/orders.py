@@ -25,16 +25,22 @@ class OrdersService:
                    ) 
             except ValidationError as e:
                 response_dict["errors"].append(f"Validation error: {e}")
-               
         return response_dict
 
     @classmethod
     def get_one(cls, id: PydanticObjectId):
         if order_from_db := cls.collection.find_one({"_id": id}):
-            return OrderFromDB.model_validate(order_from_db)
+            try:
+                return OrderFromDB.model_validate(order_from_db)
+            except ValidationError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Validation error while fetching order: {e}"
+                )
         else:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Order not found"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Order with id {id} not found"
             )
     
     @classmethod

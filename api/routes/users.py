@@ -9,7 +9,7 @@ from ..__common_deps import QueryParamsDependency
 users_router = APIRouter(prefix="/Users", tags=["Users"])
 
 @users_router.get("/")
-def get_all_users(users: UsersServiceDependency, params: QueryParamsDependency, security: SecurityDependency):
+async def get_all_users(users: UsersServiceDependency, params: QueryParamsDependency, security: SecurityDependency):
     """
     Admins only!
     """
@@ -17,7 +17,7 @@ def get_all_users(users: UsersServiceDependency, params: QueryParamsDependency, 
     return users.get_all(params)
 
 @users_router.get("/{id}")
-def get_one_user_by_id(id: PydanticObjectId, users: UsersServiceDependency, security: SecurityDependency):
+async def get_one_user_by_id(id: PydanticObjectId, users: UsersServiceDependency, security: SecurityDependency):
     """
     Authenticated user only!
     """
@@ -31,7 +31,12 @@ def get_one_user_by_id(id: PydanticObjectId, users: UsersServiceDependency, secu
             )
 
 @users_router.post("/")
-def create_user(user: AdminRegisterData, users: UsersServiceDependency, auth: AuthServiceDependency, security: SecurityDependency):
+async def create_user(
+    user: AdminRegisterData,
+    users: UsersServiceDependency,
+    auth: AuthServiceDependency,
+    security: SecurityDependency
+):
     """
     Admins only!
     """
@@ -48,8 +53,11 @@ def create_user(user: AdminRegisterData, users: UsersServiceDependency, auth: Au
             )
 
 @users_router.put("/{id}")
-def update_user(
-    id: PydanticObjectId, user: UserUpdateData, users: UsersServiceDependency, security: SecurityDependency
+async def update_user(
+    id: PydanticObjectId,
+    user: UserUpdateData,
+    users: UsersServiceDependency,
+    security: SecurityDependency
 ):
     """
     Authenticated user only!
@@ -58,7 +66,7 @@ def update_user(
     return users.update_one(id=id, user=user)
 
 @users_router.delete("/{id}")
-def delete_user(id: PydanticObjectId, users: UsersServiceDependency, security: SecurityDependency):
+async def delete_user(id: PydanticObjectId, users: UsersServiceDependency, security: SecurityDependency):
     """
     Admins only!
     """

@@ -16,7 +16,6 @@ class UsersService:
     assert (collection_name := "users") in COLLECTIONS
     collection = db[collection_name]
 
-       
     @classmethod
     def get_all(cls, params: QueryParamsDependency):
         response_dict = {"users": [], "errors": []}
@@ -28,7 +27,6 @@ class UsersService:
                    ) 
             except ValidationError as e:
                 response_dict["errors"].append(f"Validation error: {e}")
-               
         return response_dict
 
     @classmethod

@@ -59,7 +59,7 @@ class UserRegisterData(BaseUser):
     password: str 
 
 class AdminRegisterData(BaseUser):
-    role: CreationRole = Field(default=CreationRole.CUSTOMER)
+    role: CreationRole = Field(default=CreationRole.STAFF)
     password: str 
     is_active: bool = Field(default=True)
     
@@ -68,11 +68,11 @@ class UserUpdateData(BaseUser):
     role: CreationRole = Field(default=CreationRole.CUSTOMER)
     email: EmailStr = None
     image: str | None = None
-    is_active: bool | None = None
+    is_active: bool | None = None # Switch to Field(default=True) in production
 
 class UserFromDB(BaseUser):
     id: PydanticObjectId = Field(validation_alias=AliasChoices("_id", "id"))
-    is_active: bool | None = None
+    is_active: bool | None = None # Switch to required in production
     created_at: datetime
     modified_at: datetime | None = None
     
