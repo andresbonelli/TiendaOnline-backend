@@ -58,7 +58,7 @@ async def get_orders_by_staff_id(id: PydanticObjectId, security: SecurityDepende
     return orders.find_from_staff_id(id)
 
 # Purchase order (multiple products). 
-@orders_router.post("/")
+@orders_router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_order(
     order: BaseOrder,
     orders: OrdersServiceDependency,
@@ -94,7 +94,7 @@ async def create_order(
                 content={"error": f"An unexpected error ocurred while creating order"},
             )
 
-@orders_router.patch("/complete/{id}")
+@orders_router.patch("/complete/{id}", status_code=status.HTTP_200_OK)
 async def complete_order(
     id: PydanticObjectId,
     security: SecurityDependency,
@@ -108,36 +108,39 @@ async def complete_order(
     """
     existing_order = orders.get_one(id)
     security.check_user_permission(str(existing_order.customer_id))
-    
-    if existing_order.status == OrderStatus.pending:
-        # Update product stock and sales count
-        products.check_and_update_stock(existing_order.products)
-        total_price = orders.calculate_total_price(id)
-        product_details = orders.get_order_products_with_details(id)
-        
-        user_from_db = users.get_one(id=PydanticObjectId(security.auth_user_id))
-        completed_order: OrderFromDB = orders.update_one(
-            id,
-            OrderUpdateData(
-                status=OrderStatus.completed,
-                total_price=total_price[0]
-            )
-        )
-        await send_order_completion_email(
-            user=user_from_db,
-            order=completed_order,
-            product_details=product_details,
-            background_tasks=background_tasks
-        )
-        return {"message": "Order succesfully fulfilled",
-                "Completed order": completed_order.model_dump()}
-    else:
+    # Check order is not yet completed or cancelled, and user is active.
+    if existing_order.status != OrderStatus.pending:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Cannot complete order {id} with status {existing_order.status}"
         )
+    user_from_db = users.get_one(id=PydanticObjectId(security.auth_user_id))
+    if not user_from_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {security.auth_user_id} not found. Account non-existent or suspended."
+        )
+    # Continue with order completion protocol.
+    products.check_and_update_stock(existing_order.products)
+    total_price = orders.calculate_total_price(id)
+    product_details = orders.get_order_products_with_details(id)
+    completed_order: OrderFromDB = orders.update_one(
+        id,
+        OrderUpdateData(
+            status=OrderStatus.completed,
+            total_price=total_price[0]
+        )
+    )
+    await send_order_completion_email(
+        user=user_from_db,
+        order=completed_order,
+        product_details=product_details,
+        background_tasks=background_tasks
+    )
+    return {"message": "Order succesfully fulfilled",
+            "Completed order": completed_order.model_dump()}
     
-@orders_router.patch("/cancel/{id}")
+@orders_router.patch("/cancel/{id}", status_code=status.HTTP_200_OK)
 async def cancel_order(id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency):
     """
     Authenticated customer only!
@@ -145,12 +148,11 @@ async def cancel_order(id: PydanticObjectId, security: SecurityDependency, order
     existing_order = orders.get_one(id)
     security.check_user_permission(str(existing_order.customer_id))
     
-    if existing_order.status == OrderStatus.pending:
-        result: OrderFromDB = orders.update_one(id, OrderUpdateData(status=OrderStatus.cancelled))
-        return {"message": "Order cancelled!",
-                "Cancelled order": result.model_dump()}
-    else:
+    if existing_order.status != OrderStatus.pending:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Cannot cancel order {id} with status {existing_order.status}"
         )
+    result: OrderFromDB = orders.update_one(id, OrderUpdateData(status=OrderStatus.cancelled))
+    return {"message": "Order cancelled!",
+            "Cancelled order": result.model_dump()}
