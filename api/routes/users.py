@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import JSONResponse
 from pydantic_mongo import PydanticObjectId
 
 from ..models import UserUpdateData, AdminRegisterData
@@ -37,7 +38,14 @@ def create_user(user: AdminRegisterData, users: UsersServiceDependency, auth: Au
     security.is_admin_or_raise
     hash_password = auth.get_password_hash(user.password)
     result = users.create_one(user, hash_password)
-    return {"result message": f"User created with id: {result.inserted_id}"}
+    if result.acknowledged:
+        return {"result message": "New user succesfully created",
+                "inserted_id": f"{result.inserted_id}"}
+    else:
+        return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": f"An unexpected error ocurred while creating order"},
+            )
 
 @users_router.put("/{id}")
 def update_user(

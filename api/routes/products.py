@@ -26,7 +26,7 @@ async def autocomplete_products(products: ProductsServiceDependency, search: Sea
 
 @products_router.get("/{id}")
 async def get_product(id: PydanticObjectId, products: ProductsServiceDependency):
-    return products.get_one(id) 
+    return products.get_one(id).model_dump()
 
 @products_router.get("/get_by_staff/{id}")
 async def get_products_by_staff_id(id: PydanticObjectId, products: ProductsServiceDependency, security: SecurityDependency):
@@ -46,7 +46,8 @@ async def create_product(product: BaseProduct, products:  ProductsServiceDepende
 
     result = products.create_one(product, PydanticObjectId(security.auth_user_id))
     if result.acknowledged:
-        return {"result message": f"Product created with id: {result.inserted_id}"}
+        return {"result message": "Product succesfully created",
+                "inserted_id": f"{result.inserted_id}"}
     else:
         return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -64,12 +65,9 @@ async def update_product(
     Authenticaded staff members and admins only!
     """
     existing_product = products.get_one(id)
-    security.check_user_permission(existing_product["staff_id"])
-
+    security.check_user_permission(existing_product.staff_id)
     result = products.update_one(id, product) 
-
     return {"message": "Product succesfully updated","updated product": result}
- 
   
 @products_router.delete("/{id}", status_code=status.HTTP_202_ACCEPTED)
 async def delete_product(id: PydanticObjectId, products: ProductsServiceDependency, security: SecurityDependency):
@@ -78,6 +76,5 @@ async def delete_product(id: PydanticObjectId, products: ProductsServiceDependen
     """
     security.is_admin_or_raise
     result = products.delete_one(id)
-   
     return {"message": "Product succesfully deleted", "deleted product": result}
   

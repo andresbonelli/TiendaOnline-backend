@@ -95,8 +95,6 @@ class OrdersService:
             "totalPrice": {
             "$sum": "$productTotal"
             }}}
-        
-        
         cursor = cls.collection.aggregate([match,unwind,lookup,prod_unwind,set,group])
         return [doc["totalPrice"] for doc in cursor]
 

@@ -94,7 +94,8 @@ def create_order(
     }
     result = orders.create_one(new_order)
     if result.acknowledged:
-        return {"result message": f"Order created with id: {result.inserted_id}"}
+        return {"result message": "Order succesfully created",
+                "inserted_id": f"{result.inserted_id}"}
     else:
         return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

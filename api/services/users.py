@@ -52,7 +52,6 @@ class UsersService:
                 {"email": email},
             ]
         }
-        
         if user_from_db := cls.collection.find_one(filter):
             return (
                 PrivateUserFromDB.model_validate(user_from_db).model_dump()
@@ -79,7 +78,6 @@ class UsersService:
             is_active=True if make_it_admin else False,
             role="admin" if make_it_admin else new_user["role"]
         )
-
         return cls.collection.insert_one(new_user) or None
 
     @classmethod
@@ -87,32 +85,30 @@ class UsersService:
         modified_user = user.model_dump(exclude={"password", "username", "email"}, exclude_unset=True)
         modified_user.update(modified_at=datetime.now())
 
-        document = cls.collection.find_one_and_update(
+        if document := cls.collection.find_one_and_update(
             {"_id": id},
             {"$set": modified_user},
             return_document=True,
-        )
-
-        if document:
+        ):
             return UserFromDB.model_validate(document).model_dump()
         else:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {id} was not found."
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with id: {id} was not found."
             )
-    
     
     @classmethod
     def update_password(cls, id: PydanticObjectId, hash_password: str):
-        document = cls.collection.find_one_and_update(
+        if document := cls.collection.find_one_and_update(
             {"_id": id},
             {"$set": {"hash_password": hash_password, "modified_at": datetime.now()}},
             return_document=True,
-        )
-        if document:
+        ):
             return PrivateUserFromDB.model_validate(document).model_dump()
         else:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {id} was not found."
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with id: {id} was not found."
             )
 
     @classmethod
@@ -122,7 +118,8 @@ class UsersService:
             return UserFromDB.model_validate(document).model_dump()
         else:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {id} was not found."
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with id: {id} was not found."
             )
 
 
