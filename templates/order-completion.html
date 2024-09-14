@@ -25,6 +25,21 @@
             font-size: 1rem;
             line-height: 1.5;
         }
+         .product-img {
+            width: 100px;
+            height: auto;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        ul {
+            padding: 0;
+            list-style-type: none;
+        }
+        li {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -32,7 +47,15 @@
         <p>Dear {{ name }},</p>
         <p>Thank you for completing your purchase.</p>
         <p>Your order details are:</p>
-        
+        <ul>
+            {% for product in products %}
+            <li><strong>{{ product.name }}</strong>
+                <br><img src="{{ product.image }}" alt="{{ product.name }}" class="product-img"/>
+                <br>price: {{ product.price }}
+                <br>quantity: {{ product.quantity }}</li>
+            {% endfor %}
+        </ul>
+        <p><strong>TOTAL PRICE: {{ order.total_price }}</strong></p>
         <p>
             <a href="{{ tracking_url }}" target="_blank" class="button">Track your order</a>
         </p>

@@ -113,6 +113,9 @@ async def complete_order(
         # Update product stock and sales count
         products.check_and_update_stock(existing_order.products)
         total_price = orders.calculate_total_price(id)
+        product_details = orders.get_order_products_with_details(id)
+        
+        user_from_db = users.get_one(id=PydanticObjectId(security.auth_user_id))
         completed_order: OrderFromDB = orders.update_one(
             id,
             OrderUpdateData(
@@ -120,11 +123,12 @@ async def complete_order(
                 total_price=total_price[0]
             )
         )
-        # await send_order_completion_email(
-        #     user=users.get_one(security.auth_user_id),
-        #     order=completed_order,
-        #     background_tasks=background_tasks
-        # )
+        await send_order_completion_email(
+            user=user_from_db,
+            order=completed_order,
+            product_details=product_details,
+            background_tasks=background_tasks
+        )
         return {"message": "Order succesfully fulfilled",
                 "Completed order": completed_order.model_dump()}
     else:

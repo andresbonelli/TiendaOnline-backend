@@ -8,7 +8,7 @@ from datetime import datetime
 
 from ..__common_deps import QueryParamsDependency
 from ..config import COLLECTIONS, db
-from ..models import OrderFromDB, OrderCreateData, OrderUpdateData
+from ..models import OrderFromDB, OrderCreateData, OrderUpdateData, CompletedOrderProduct
 
 class OrdersService:
     assert (collection_name := "orders") in COLLECTIONS
@@ -103,6 +103,32 @@ class OrdersService:
             }}}
         cursor = cls.collection.aggregate([match,unwind,lookup,prod_unwind,set,group])
         return [doc["totalPrice"] for doc in cursor]
+    
+    @classmethod
+    def get_order_products_with_details(cls, order_id: PydanticObjectId) -> list:
+        match = {"$match": {"_id": order_id}}
+        unwind = {"$unwind": "$products"}
+        lookup = {
+            "$lookup": {
+                "from": "products",
+                "localField": "products.product_id",
+                "foreignField": "_id",
+                "as": "productDetails"
+            }
+        }
+        prod_unwind = {"$unwind": "$productDetails"}
+        project = {
+            "$project": {
+                "_id": 0,
+                "product_id": "$products.product_id",
+                "quantity": "$products.quantity",
+                "name": "$productDetails.name",
+                "price": "$productDetails.price",
+                "image": "$productDetails.image"
+            }
+        }
+        cursor = cls.collection.aggregate([match, unwind, lookup, prod_unwind, project])
+        return [CompletedOrderProduct.model_validate(doc) for doc in cursor]
 
     
 OrdersServiceDependency = Annotated[OrdersService, Depends()]
