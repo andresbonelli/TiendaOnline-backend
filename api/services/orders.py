@@ -77,7 +77,7 @@ class OrdersService:
                 {"$set": modified_order},
                 return_document=True,
             ):
-            return OrderFromDB.model_validate(document).model_dump()
+            return OrderFromDB.model_validate(document)
         else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

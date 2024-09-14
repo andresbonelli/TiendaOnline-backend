@@ -23,7 +23,7 @@ async def get_one_user_by_id(id: PydanticObjectId, users: UsersServiceDependency
     """
     security.check_user_permission(str(id))
     if user := users.get_one(id=id):
-        return user
+        return user.model_dump()
     else:
         raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

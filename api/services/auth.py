@@ -115,6 +115,14 @@ class SecurityService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User does not have customer role"
             )
+            
+    @property
+    def is_active_or_raise(self):
+        if not self.auth_user_is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User account is inactive"
+            )
     
     def check_user_permission(self, user_id: str):
         role = self.auth_user_role

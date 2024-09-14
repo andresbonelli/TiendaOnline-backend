@@ -1,6 +1,6 @@
 from fastapi.background import BackgroundTasks
 
-from ..models import PrivateUserFromDB
+from ..models import PrivateUserFromDB, UserFromDB, OrderFromDB
 from ..config import send_email, FRONTEND_HOST, APP_TITLE
 from ..services import AuthService
 
@@ -41,3 +41,20 @@ async def send_reset_password_email(user: PrivateUserFromDB, background_tasks: B
         context=data,
         background_tasks=background_tasks
     )
+    
+async def send_order_completion_email(user: UserFromDB, order: OrderFromDB, background_tasks: BackgroundTasks):
+    data = {
+        "app_name": APP_TITLE,
+        "name": user.username,
+        "order": order.model_dump(),
+        "tracking_url": "https://fakecourier.com/tracking/orders/1234"
+    }
+    subject = f"Order completed - {APP_TITLE}"
+    await send_email(
+        recipients=[user.email],
+        subject=subject,
+        template_name="order-completion.html",
+        context=data,
+        background_tasks=background_tasks
+    )
+    

@@ -1,16 +1,18 @@
 __all__ = ["orders_router"]
 
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status, BackgroundTasks, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic_mongo import PydanticObjectId
 from datetime import datetime
 
 from ..__common_deps import QueryParamsDependency
-from ..models import BaseOrder, OrderStatus, OrderUpdateData
+from ..models import BaseOrder, OrderStatus, OrderUpdateData, OrderFromDB
 from ..services import (
     OrdersServiceDependency,
     ProductsServiceDependency,
+    UsersServiceDependency,
     SecurityDependency,
+    send_order_completion_email
 )
 
 orders_router = APIRouter(prefix="/orders", tags=["Orders"])
@@ -97,7 +99,9 @@ async def complete_order(
     id: PydanticObjectId,
     security: SecurityDependency,
     orders: OrdersServiceDependency,
-    products: ProductsServiceDependency
+    products: ProductsServiceDependency,
+    users: UsersServiceDependency,
+    background_tasks: BackgroundTasks
 ):
     """
     Authenticated customer only!
@@ -109,11 +113,20 @@ async def complete_order(
         # Update product stock and sales count
         products.check_and_update_stock(existing_order.products)
         total_price = orders.calculate_total_price(id)
-        result = orders.update_one(id, OrderUpdateData(
-            status=OrderStatus.completed,
-            total_price=total_price[0]
-            ))
-        return {"message": "Order succesfully fulfilled","Completed order": result}
+        completed_order: OrderFromDB = orders.update_one(
+            id,
+            OrderUpdateData(
+                status=OrderStatus.completed,
+                total_price=total_price[0]
+            )
+        )
+        # await send_order_completion_email(
+        #     user=users.get_one(security.auth_user_id),
+        #     order=completed_order,
+        #     background_tasks=background_tasks
+        # )
+        return {"message": "Order succesfully fulfilled",
+                "Completed order": completed_order.model_dump()}
     else:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -129,8 +142,9 @@ async def cancel_order(id: PydanticObjectId, security: SecurityDependency, order
     security.check_user_permission(str(existing_order.customer_id))
     
     if existing_order.status == OrderStatus.pending:
-        result = orders.update_one(id, OrderUpdateData(status=OrderStatus.cancelled))
-        return {"message": "Order cancelled!","Cancelled order": result}
+        result: OrderFromDB = orders.update_one(id, OrderUpdateData(status=OrderStatus.cancelled))
+        return {"message": "Order cancelled!",
+                "Cancelled order": result.model_dump()}
     else:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

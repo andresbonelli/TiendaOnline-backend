@@ -52,9 +52,9 @@ class UsersService:
         }
         if user_from_db := cls.collection.find_one(filter):
             return (
-                PrivateUserFromDB.model_validate(user_from_db).model_dump()
+                PrivateUserFromDB.model_validate(user_from_db)
                 if with_password
-                else UserFromDB.model_validate(user_from_db).model_dump()
+                else UserFromDB.model_validate(user_from_db)
             )
         else:
             return None

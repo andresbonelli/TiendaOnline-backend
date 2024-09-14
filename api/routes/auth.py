@@ -32,15 +32,15 @@ async def register(
 ):
     user.role = "customer"
     hash_password = auth.get_password_hash(user.password)
-    
+
     result = users.create_one(user, hash_password)
-    new_user = users.get_one(id=result.inserted_id, with_password=True)
-    
-    await send_account_verification_email(
-        PrivateUserFromDB.model_validate(new_user),
-        background_tasks=background_tasks
-    )
-    
+    if new_user := users.get_one(id=result.inserted_id, with_password=True):
+        await send_account_verification_email(new_user, background_tasks=background_tasks)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error ocurred while retrieving new user to database."
+        )
     return {"result message": f"User created with id: {result.inserted_id}"}
 
 @auth_router.post("/verify", status_code=status.HTTP_200_OK)
@@ -49,9 +49,8 @@ async def verify_user_account(
     users: UsersServiceDependency,
     auth: AuthServiceDependency,
 ):
-    user_from_db = PrivateUserFromDB.model_validate(
-        users.get_one(email=verify_request.email, with_password=True)
-        )
+    user_from_db = users.get_one(email=verify_request.email, with_password=True)
+    
     if user_from_db.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -85,7 +84,7 @@ async def login_with_cookie(
     auth: AuthServiceDependency,
 ):
     user_from_db = users.get_one(username=user.username, with_password=True)
-    if not user_from_db or not user_from_db["is_active"]:
+    if not user_from_db or not user_from_db.is_active:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User does not exist or inactive"
@@ -115,16 +114,13 @@ async def refresh_credentials(response: Response, auth: AuthServiceDependency, r
 
 @auth_router.post("/forgot-password", status_code=status.HTTP_200_OK)
 async def user_forgot_password(email: EmailStr, users: UsersServiceDependency, background_tasks: BackgroundTasks):
-    user_from_db = users.get_one(email=email, with_password=True)
-    if not user_from_db or not user_from_db["is_active"]:
+    user_from_db: PrivateUserFromDB = users.get_one(email=email, with_password=True)
+    if not user_from_db or not user_from_db.is_active:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User does not exist or inactive"
             )
-    await send_reset_password_email(
-        PrivateUserFromDB.model_validate(user_from_db),
-        background_tasks=background_tasks
-    )
+    await send_reset_password_email(user_from_db, background_tasks=background_tasks)
     return JSONResponse({"message": f"An email with password reset link has been sent to {email}"})
 
 @auth_router.put("/reset-password", status_code=status.HTTP_200_OK)
@@ -133,9 +129,7 @@ async def user_reset_password(
     auth: AuthServiceDependency,
     users: UsersServiceDependency
 ):
-    user_from_db = PrivateUserFromDB.model_validate(
-        users.get_one(email=verify_request.email, with_password=True)
-        )
+    user_from_db: PrivateUserFromDB = users.get_one(email=verify_request.email, with_password=True)
     if not user_from_db.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -143,7 +137,6 @@ async def user_reset_password(
         )
         
     context_string = f"{user_from_db.hash_password}{user_from_db.modified_at.strftime('%d/%m/%Y,%H:%M:%S')}-reset-password" 
-    
     try:
         if auth.verify_password(context_string, verify_request.token):
             return users.update_password(

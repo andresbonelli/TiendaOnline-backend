@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<head>
+    <title>Order completed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+        .email-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .logo {
+            max-width: 150px;
+            margin-bottom: 16px;
+        }
+        .button {
+            color: #fff;
+            background-color: #007BFF;
+            border-color: #007BFF;
+            border-radius: .25rem;
+            text-decoration: none;
+            padding: .375rem .75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <p>Dear {{ name }},</p>
+        <p>Thank you for completing your purchase.</p>
+        <p>Your order details are:</p>
+        
+        <p>
+            <a href="{{ tracking_url }}" target="_blank" class="button">Track your order</a>
+        </p>
+        <p>Thank you for choosing us!</p>
+        <p>Best Regards,<br>{{ app_name }}</p>
+    </div>
+</body>
+</html>
