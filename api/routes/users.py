@@ -21,7 +21,7 @@ async def get_one_user_by_id(id: PydanticObjectId, users: UsersServiceDependency
     """
     Authenticated user only!
     """
-    security.check_user_permission(str(id))
+    security.check_user_permission(id)
     if user := users.get_one(id=id):
         return user.model_dump()
     else:
@@ -57,12 +57,13 @@ async def update_user(
     id: PydanticObjectId,
     user: UserUpdateData,
     users: UsersServiceDependency,
+    auth: AuthServiceDependency,
     security: SecurityDependency
 ):
     """
     Authenticated user only!
     """
-    security.check_user_permission(str(id))
+    security.check_user_permission(id)
     return users.update_one(id=id, user=user)
 
 @users_router.delete("/{id}")

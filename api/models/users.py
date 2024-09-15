@@ -1,4 +1,5 @@
 __all__ = [
+    "Role",
     "BaseUser",
     "UserLoginData",
     "UserFromDB",

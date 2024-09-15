@@ -4,10 +4,13 @@ from fastapi import Depends, HTTPException, Response, Security, status
 from fastapi_jwt import JwtAccessBearerCookie, JwtAuthorizationCredentials, JwtRefreshBearer
 from fastapi.encoders import jsonable_encoder
 from passlib.context import CryptContext
+from pydantic import EmailStr
+from pydantic_mongo import PydanticObjectId
 from typing import Annotated
+from datetime import datetime
 
 from ..config import access_token_exp, refresh_token_exp, SECRET_KEY, REFRESH_KEY
-from ..models import UserFromDB
+from ..models import UserFromDB, Role
 
 access_security = JwtAccessBearerCookie(secret_key=SECRET_KEY, access_expires_delta=access_token_exp, auto_error=True)
 refresh_security = JwtRefreshBearer(secret_key=REFRESH_KEY, auto_error=True)
@@ -63,13 +66,13 @@ class SecurityService:
     
     """
     def __init__(self, credentials: AuthCredentials):
-        self.auth_user_id = credentials.subject.get("id")
-        self.auth_user_name = credentials.subject.get("username")
-        self.auth_user_email = credentials.subject.get("email")
-        self.auth_user_role = credentials.subject.get("role")  
-        self.auth_user_created_at = credentials.subject.get("created_at")
-        self.auth_user_modified_at = credentials.subject.get("modified_at")
-        self.auth_user_is_active = credentials.subject.get("is_active")
+        self.auth_user_id = PydanticObjectId(credentials.subject.get("id"))
+        self.auth_user_name: str = credentials.subject.get("username")
+        self.auth_user_email: EmailStr = credentials.subject.get("email")
+        self.auth_user_role: Role = credentials.subject.get("role")  
+        self.auth_user_created_at: datetime = credentials.subject.get("created_at")
+        self.auth_user_modified_at: datetime = credentials.subject.get("modified_at")
+        self.auth_user_is_active: bool = credentials.subject.get("is_active")
         self.auth_user_address: list = credentials.subject.get("address")
         
     @property
@@ -89,9 +92,18 @@ class SecurityService:
     @property
     def is_active(self):
         return self.auth_user_is_active
+    
+    @property
+    def is_active_or_raise(self):
+        if not self.auth_user_is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User account is inactive"
+            )
         
     @property
     def is_admin_or_raise(self):
+        self.is_active_or_raise
         if self.auth_user_role != "admin":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -100,6 +112,7 @@ class SecurityService:
 
     @property
     def is_staff_or_raise(self):
+        self.is_active_or_raise
         role = self.auth_user_role
         if role not in ["admin","staff"]:
             raise HTTPException(
@@ -109,6 +122,7 @@ class SecurityService:
 
     @property
     def is_customer_or_raise(self):
+        self.is_active_or_raise
         role = self.auth_user_role
         if role not in ["admin","customer"]:
             raise HTTPException(
@@ -116,17 +130,10 @@ class SecurityService:
                 detail="User does not have customer role"
             )
             
-    @property
-    def is_active_or_raise(self):
-        if not self.auth_user_is_active:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User account is inactive"
-            )
-    
-    def check_user_permission(self, user_id: str):
+    def check_user_permission(self, user_id: PydanticObjectId):
+        self.is_active_or_raise
         role = self.auth_user_role
-        if str(self.auth_user_id) != user_id and role != "admin":
+        if self.auth_user_id != user_id and role != "admin":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User does not have permission to access this item"

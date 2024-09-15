@@ -3,7 +3,6 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Response
 from fastapi.responses import JSONResponse
 from pydantic import EmailStr
 from passlib.exc import UnknownHashError
-from pydantic_core import ValidationError
 
 from ..models import (
     UserRegisterData,
@@ -33,10 +32,9 @@ async def register(
 ):
     user.role = "customer"
     hash_password = auth.get_password_hash(user.password)
-
     result = users.create_one(user, hash_password)
     if new_user := users.get_one(id=result.inserted_id, with_password=True):
-        await send_account_verification_email(new_user, background_tasks=background_tasks)
+        await send_account_verification_email(user=new_user, background_tasks=background_tasks)
     else:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -57,7 +55,6 @@ async def verify_user_account(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Account already verified"
         )
-
     context_time: datetime = user_from_db.modified_at or user_from_db.created_at 
     context_string = f"{user_from_db.hash_password}{context_time.strftime('%d/%m/%Y,%H:%M:%S')}-verify" 
     try:
@@ -104,7 +101,7 @@ async def login_with_cookie(
 @auth_router.get("/authenticated_user", status_code=status.HTTP_200_OK)
 async def read_current_user(security: SecurityDependency):
     return dict(
-        id=security.auth_user_id,
+        id=str(security.auth_user_id),
         username=security.auth_user_name,
         email=security.auth_user_email,
         role=security.auth_user_role,

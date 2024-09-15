@@ -38,7 +38,7 @@ async def get_orders_by_customer_id(id: PydanticObjectId, security: SecurityDepe
     """
     Authenticated customer only!
     """
-    security.check_user_permission(str(id))
+    security.check_user_permission(id)
     return orders.find_from_customer_id(id)
   
 @orders_router.get("/get_by_product/{id}")
@@ -54,7 +54,7 @@ async def get_orders_by_staff_id(id: PydanticObjectId, security: SecurityDepende
     """
     Authenticated staff member only!
     """
-    security.check_user_permission(str(id))
+    security.check_user_permission(id)
     return orders.find_from_staff_id(id)
 
 # Purchase order (multiple products). 
@@ -107,7 +107,7 @@ async def complete_order(
     Authenticated customer only!
     """
     existing_order = orders.get_one(id)
-    security.check_user_permission(str(existing_order.customer_id))
+    security.check_user_permission(existing_order.customer_id)
     # Check order is not yet completed or cancelled, and user is active.
     if existing_order.status != OrderStatus.pending:
         raise HTTPException(
@@ -146,7 +146,7 @@ async def cancel_order(id: PydanticObjectId, security: SecurityDependency, order
     Authenticated customer only!
     """
     existing_order = orders.get_one(id)
-    security.check_user_permission(str(existing_order.customer_id))
+    security.check_user_permission(existing_order.customer_id)
     
     if existing_order.status != OrderStatus.pending:
         raise HTTPException(
