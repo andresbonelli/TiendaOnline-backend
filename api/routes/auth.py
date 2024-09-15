@@ -3,6 +3,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Response
 from fastapi.responses import JSONResponse
 from pydantic import EmailStr
 from passlib.exc import UnknownHashError
+from pydantic_core import ValidationError
 
 from ..models import (
     UserRegisterData,
@@ -83,7 +84,12 @@ async def login_with_cookie(
     users: UsersServiceDependency,
     auth: AuthServiceDependency,
 ):
-    user_from_db = users.get_one(username=user.username, with_password=True)
+    # Login with username or email
+    user_from_db = users.get_one(
+        username=user.input if "@" not in user.input else None,
+        email=user.input if "@" in user.input else None,
+        with_password=True
+    )
     if not user_from_db or not user_from_db.is_active:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -91,7 +97,7 @@ async def login_with_cookie(
             )
     return auth.login_and_set_access_token(
         password=user.password,
-        user_from_db=user_from_db,
+        user_from_db=user_from_db.model_dump(),
         response=response
     )
 

@@ -44,7 +44,7 @@ class BaseUser(BaseModel):
     address: list[Address] | None = None   
 
 class UserLoginData(BaseModel):
-    username: str
+    input: str | EmailStr
     password: str
     
 class UserVerifyRequest(BaseModel):
