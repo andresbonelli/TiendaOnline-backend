@@ -2,6 +2,7 @@ from datetime import datetime
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Response
 from fastapi.responses import JSONResponse
 from pydantic import EmailStr
+from pydantic_mongo import PydanticObjectId
 from passlib.exc import UnknownHashError
 
 from ..models import (
@@ -112,7 +113,19 @@ async def read_current_user(security: SecurityDependency):
     )
 
 @auth_router.post("/refresh", status_code=status.HTTP_200_OK)
-async def refresh_credentials(response: Response, auth: AuthServiceDependency, refresh: RefreshCredentials):
+async def refresh_credentials(
+    response: Response,
+    auth: AuthServiceDependency,
+    users: UsersServiceDependency,
+    refresh: RefreshCredentials
+    ):
+    user_id = PydanticObjectId(refresh["id"])
+    user_from_db = users.get_one(id=user_id)
+    if not user_from_db or not user_from_db.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User does not exist or inactive"
+            )
     return auth.refresh_access_token(response, refresh)
 
 @auth_router.post("/forgot-password", status_code=status.HTTP_200_OK)

@@ -36,7 +36,6 @@ class AuthService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect Credentials",
             )
-
         userdata = UserFromDB.model_validate(user_from_db).model_dump()
         access_token = access_security.create_access_token(
             subject=jsonable_encoder(userdata), expires_delta=access_token_exp
@@ -49,9 +48,7 @@ class AuthService:
 
         return {"access_token": access_token, "refresh_token": refresh_token}
     
-
-    @classmethod
-    def refresh_access_token(cls, response: Response, refresh: RefreshCredentials):
+    def refresh_access_token(self, response: Response, refresh: RefreshCredentials):
         access_token = access_security.create_access_token(subject=refresh.subject)
         refresh_token = refresh_security.create_refresh_token(subject=refresh.subject, expires_delta=refresh_token_exp)
   
