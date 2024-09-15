@@ -57,7 +57,6 @@ async def update_user(
     id: PydanticObjectId,
     user: UserUpdateData,
     users: UsersServiceDependency,
-    auth: AuthServiceDependency,
     security: SecurityDependency
 ):
     """
