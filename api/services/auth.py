@@ -66,14 +66,14 @@ class SecurityService:
     
     """
     def __init__(self, credentials: AuthCredentials):
-        self.auth_user_id = PydanticObjectId(credentials.subject.get("id"))
-        self.auth_user_name: str = credentials.subject.get("username")
-        self.auth_user_email: EmailStr = credentials.subject.get("email")
-        self.auth_user_role: Role = credentials.subject.get("role")  
-        self.auth_user_created_at: datetime = credentials.subject.get("created_at")
-        self.auth_user_modified_at: datetime = credentials.subject.get("modified_at")
-        self.auth_user_is_active: bool = credentials.subject.get("is_active")
-        self.auth_user_address: list = credentials.subject.get("address")
+        self.auth_user_id = PydanticObjectId(credentials["id"])
+        self.auth_user_name: str = credentials["username"]
+        self.auth_user_email: EmailStr = credentials["email"]
+        self.auth_user_role: Role = credentials["role"]  
+        self.auth_user_created_at: datetime = credentials["created_at"]
+        self.auth_user_modified_at: datetime = credentials["modified_at"]
+        self.auth_user_is_active: bool = credentials["is_active"]
+        self.auth_user_address: list = credentials["address"]
         
     @property
     def is_admin(self):
