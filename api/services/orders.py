@@ -7,8 +7,9 @@ from typing import Annotated
 from datetime import datetime
 
 from ..__common_deps import QueryParamsDependency
+from ..services import ProductsServiceDependency, UsersServiceDependency
 from ..config import COLLECTIONS, db
-from ..models import OrderFromDB, OrderCreateData, OrderUpdateData, CompletedOrderProduct
+from ..models import BaseOrder, OrderStatus, OrderFromDB, OrderUpdateData, CompletedOrderProduct
 
 class OrdersService:
     assert (collection_name := "orders") in COLLECTIONS
@@ -63,15 +64,26 @@ class OrdersService:
         return [OrderFromDB.model_validate(order).model_dump() for order in cursor]
     
     @classmethod
-    def create_one(cls, order: dict):
-        OrderCreateData.model_validate(order)
-        return cls.collection.insert_one(order) or None
+    def create_one(cls, order: BaseOrder, customer_id: PydanticObjectId, products: ProductsServiceDependency):
+        products.check_stock(order.products)
+        new_order: dict = {
+        "customer_id": PydanticObjectId(customer_id),
+        "products": [
+                {
+                "product_id": PydanticObjectId(product.product_id),
+                "quantity": product.quantity
+                }
+                for product in order.products
+            ],
+        "status": OrderStatus.pending,
+        "created_at": datetime.now()
+    }
+        return cls.collection.insert_one(new_order)
 
     @classmethod
     def update_one(cls, order_id: PydanticObjectId, order: OrderUpdateData):
         modified_order: dict = order.model_dump(exclude_unset=True, exclude_none=True)
         modified_order.update(modified_at=datetime.now()) 
-    
         if document := cls.collection.find_one_and_update(
                 {"_id": order_id},
                 {"$set": modified_order},
@@ -129,6 +141,6 @@ class OrdersService:
         }
         cursor = cls.collection.aggregate([match, unwind, lookup, prod_unwind, project])
         return [CompletedOrderProduct.model_validate(doc) for doc in cursor]
-
+    
     
 OrdersServiceDependency = Annotated[OrdersService, Depends()]

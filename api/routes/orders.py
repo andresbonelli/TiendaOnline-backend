@@ -1,9 +1,7 @@
 __all__ = ["orders_router"]
 
 from fastapi import APIRouter, status, BackgroundTasks, HTTPException
-from fastapi.responses import JSONResponse
 from pydantic_mongo import PydanticObjectId
-from datetime import datetime
 
 from ..__common_deps import QueryParamsDependency
 from ..models import BaseOrder, OrderStatus, OrderUpdateData, OrderFromDB
@@ -57,7 +55,7 @@ async def get_orders_by_staff_id(id: PydanticObjectId, security: SecurityDepende
     security.check_user_permission(id)
     return orders.find_from_staff_id(id)
 
-# Purchase order (multiple products). 
+# Generate order from Cart with multiple products. 
 @orders_router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_order(
     order: BaseOrder,
@@ -67,34 +65,58 @@ async def create_order(
 ):
     """
     Customers only!
+    Generate order from Cart with multiple products.
     """
     security.is_customer_or_raise
     
-    #Prepare Order and store in database
-    products.check_stock(order.products)
-    new_order: dict = {
-        "customer_id": PydanticObjectId(security.auth_user_id),
-        "products": [
-                {
-                "product_id": PydanticObjectId(product.product_id),
-                "quantity": product.quantity
-                }
-                for product in order.products
-            ],
-        "status": OrderStatus.pending,
-        "created_at": datetime.now()
-    }
-    result = orders.create_one(new_order)
+    result = orders.create_one(order, security.auth_user_id, products)
     if result.acknowledged:
-        return {"result message": "Order succesfully created",
+        return {"message": "Order succesfully created",
                 "inserted_id": f"{result.inserted_id}"}
     else:
-        return JSONResponse(
+        raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"error": f"An unexpected error ocurred while creating order"},
+                detail="Unexpected error while updating order"
             )
+        
+@orders_router.put("/update/{id}")
+async def update_order(
+    id: PydanticObjectId,
+    order: OrderUpdateData,
+    security: SecurityDependency,
+    orders: OrdersServiceDependency):
+    """
+    Authenticated customer only!
+    """
+    existing_order = orders.get_one(id)
+    security.check_user_permission(existing_order.customer_id)
+    if existing_order.status != OrderStatus.pending:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Cannot cancel order {id} with status {existing_order.status}"
+        )
+    result: OrderFromDB = orders.update_one(id, order)
+    return {"message": "Order modifier!",
+            "order": result.model_dump()}
 
-@orders_router.patch("/complete/{id}", status_code=status.HTTP_200_OK)
+@orders_router.put("/cancel/{id}", status_code=status.HTTP_200_OK)
+async def cancel_order(id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency):
+    """
+    Authenticated customer only!
+    """
+    existing_order = orders.get_one(id)
+    security.check_user_permission(existing_order.customer_id)
+    
+    if existing_order.status != OrderStatus.pending:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Cannot cancel order {id} with status {existing_order.status}"
+        )
+    result: OrderFromDB = orders.update_one(id, OrderUpdateData(status=OrderStatus.cancelled))
+    return {"message": "Order cancelled!",
+            "order": result.model_dump()}
+    
+@orders_router.put("/complete/{id}", status_code=status.HTTP_200_OK)
 async def complete_order(
     id: PydanticObjectId,
     security: SecurityDependency,
@@ -109,12 +131,13 @@ async def complete_order(
     existing_order = orders.get_one(id)
     security.check_user_permission(existing_order.customer_id)
     # Check order is not yet completed or cancelled, and user is active.
+    
     if existing_order.status != OrderStatus.pending:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Cannot complete order {id} with status {existing_order.status}"
         )
-    user_from_db = users.get_one(id=PydanticObjectId(security.auth_user_id))
+    user_from_db = users.get_one(id=security.auth_user_id)
     if not user_from_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -136,23 +159,8 @@ async def complete_order(
         order=completed_order,
         product_details=product_details,
         background_tasks=background_tasks
-    )
-    return {"message": "Order succesfully fulfilled",
-            "Completed order": completed_order.model_dump()}
-    
-@orders_router.patch("/cancel/{id}", status_code=status.HTTP_200_OK)
-async def cancel_order(id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency):
-    """
-    Authenticated customer only!
-    """
-    existing_order = orders.get_one(id)
-    security.check_user_permission(existing_order.customer_id)
-    
-    if existing_order.status != OrderStatus.pending:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot cancel order {id} with status {existing_order.status}"
         )
-    result: OrderFromDB = orders.update_one(id, OrderUpdateData(status=OrderStatus.cancelled))
-    return {"message": "Order cancelled!",
-            "Cancelled order": result.model_dump()}
+    return {"message": "Order succesfully fulfilled",
+            "order": completed_order}
+        
+    

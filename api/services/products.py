@@ -112,7 +112,7 @@ class ProductsService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Product with id {id} not found"
             )
-            
+                
     @classmethod
     def check_stock(cls, order_products: list[OrderProduct]) -> None:
         for product in order_products:

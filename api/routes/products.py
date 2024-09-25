@@ -37,7 +37,7 @@ async def get_products_by_staff_id(id: PydanticObjectId, products: ProductsServi
     return products.find_from_staff_id(id)
     
 @products_router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_product(product: BaseProduct, products:  ProductsServiceDependency, security: SecurityDependency):
+async def create_product(product: BaseProduct, products: ProductsServiceDependency, security: SecurityDependency):
     """
     Staff members and admins only!
     """
@@ -46,7 +46,7 @@ async def create_product(product: BaseProduct, products:  ProductsServiceDepende
 
     result = products.create_one(product, PydanticObjectId(security.auth_user_id))
     if result.acknowledged:
-        return {"result message": "Product succesfully created",
+        return {"message": "Product succesfully created",
                 "inserted_id": f"{result.inserted_id}"}
     else:
         return JSONResponse(
@@ -67,7 +67,7 @@ async def update_product(
     existing_product = products.get_one(id)
     security.check_user_permission(existing_product.staff_id)
     result = products.update_one(id, product) 
-    return {"message": "Product succesfully updated","updated product": result}
+    return {"message": "Product succesfully updated","product": result}
   
 @products_router.delete("/{id}", status_code=status.HTTP_202_ACCEPTED)
 async def delete_product(id: PydanticObjectId, products: ProductsServiceDependency, security: SecurityDependency):
@@ -76,5 +76,5 @@ async def delete_product(id: PydanticObjectId, products: ProductsServiceDependen
     """
     security.is_admin_or_raise
     result = products.delete_one(id)
-    return {"message": "Product succesfully deleted", "deleted product": result}
+    return {"message": "Product succesfully deleted", "product": result}
   

@@ -29,7 +29,7 @@ async def register(
     user: UserRegisterData,
     users: UsersServiceDependency,
     auth: AuthServiceDependency,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
 ):
     user.role = "customer"
     hash_password = auth.get_password_hash(user.password)
@@ -41,7 +41,7 @@ async def register(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error ocurred while retrieving new user to database."
         )
-    return {"result message": f"User created with id: {result.inserted_id}"}
+    return {"message": f"User created with id: {result.inserted_id}"}
 
 @auth_router.post("/verify", status_code=status.HTTP_200_OK)
 async def verify_user_account(
@@ -82,7 +82,9 @@ async def login_with_cookie(
     users: UsersServiceDependency,
     auth: AuthServiceDependency,
 ):
-    # Login with username or email
+    """
+    Login with username or email
+    """
     user_from_db = users.get_one(
         username=user.input if "@" not in user.input else None,
         email=user.input if "@" in user.input else None,
@@ -129,7 +131,11 @@ async def refresh_credentials(
     return auth.refresh_access_token(response, refresh)
 
 @auth_router.post("/forgot-password", status_code=status.HTTP_200_OK)
-async def user_forgot_password(email: EmailStr, users: UsersServiceDependency, background_tasks: BackgroundTasks):
+async def user_forgot_password(
+    email: EmailStr,
+    users: UsersServiceDependency,
+    background_tasks: BackgroundTasks
+):
     user_from_db: PrivateUserFromDB = users.get_one(email=email, with_password=True)
     if not user_from_db or not user_from_db.is_active:
         raise HTTPException(

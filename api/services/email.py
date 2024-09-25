@@ -62,4 +62,5 @@ async def send_order_completion_email(
         context=data,
         background_tasks=background_tasks
     )
-    
+        
+        

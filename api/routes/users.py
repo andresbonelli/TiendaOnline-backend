@@ -44,7 +44,7 @@ async def create_user(
     hash_password = auth.get_password_hash(user.password)
     result = users.create_one(user, hash_password)
     if result.acknowledged:
-        return {"result message": "New user succesfully created",
+        return {"message": "New user succesfully created",
                 "inserted_id": f"{result.inserted_id}"}
     else:
         return JSONResponse(
@@ -72,5 +72,5 @@ async def delete_user(id: PydanticObjectId, users: UsersServiceDependency, secur
     """
     security.is_admin_or_raise
     result = users.delete_one(id=id)
-    return {"result message": "User succesfully deleted", "deleted user": result}
+    return {"message": "User succesfully deleted", "deleted user": result}
 
