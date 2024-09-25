@@ -82,7 +82,7 @@ async def create_order(
 @orders_router.put("/update/{id}")
 async def update_order(
     id: PydanticObjectId,
-    order: OrderUpdateData,
+    order: BaseOrder,
     security: SecurityDependency,
     orders: OrdersServiceDependency):
     """
@@ -96,7 +96,7 @@ async def update_order(
             detail=f"Cannot cancel order {id} with status {existing_order.status}"
         )
     result: OrderFromDB = orders.update_one(id, order)
-    return {"message": "Order modifier!",
+    return {"message": "Order modified!",
             "order": result.model_dump()}
 
 @orders_router.put("/cancel/{id}", status_code=status.HTTP_200_OK)
