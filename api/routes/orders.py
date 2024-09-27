@@ -93,7 +93,7 @@ async def update_order(
     if existing_order.status != OrderStatus.pending:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot cancel order {id} with status {existing_order.status}"
+            detail=f"Cannot modify order {id} with status {existing_order.status}"
         )
     result: OrderFromDB = orders.update_one(id, order)
     return {"message": "Order modified!",
