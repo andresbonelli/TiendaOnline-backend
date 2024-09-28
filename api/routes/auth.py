@@ -35,7 +35,8 @@ async def register(
     hash_password = auth.get_password_hash(user.password)
     result = users.create_one(user, hash_password)
     if new_user := users.get_one(id=result.inserted_id, with_password=True):
-        await send_account_verification_email(user=new_user, background_tasks=background_tasks)
+        print(f"user created with id: {new_user.id}")
+        # await send_account_verification_email(user=new_user, background_tasks=background_tasks)
     else:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
