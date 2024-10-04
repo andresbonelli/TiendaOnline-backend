@@ -161,6 +161,7 @@ async def complete_order(
         background_tasks=background_tasks
         )
     return {"message": "Order succesfully fulfilled",
-            "order": completed_order}
+            "order": completed_order,
+            "details": product_details}
         
     

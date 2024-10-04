@@ -36,7 +36,7 @@ class AuthService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect Credentials",
             )
-        userdata = UserFromDB.model_validate(user_from_db).model_dump()
+        userdata = UserFromDB.model_validate(user_from_db).model_dump(exclude={"email", "firstname", "lastname", "image", "address"})
         access_token = access_security.create_access_token(
             subject=jsonable_encoder(userdata), expires_delta=access_token_exp
         )

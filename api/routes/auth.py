@@ -107,12 +107,10 @@ async def read_current_user(security: SecurityDependency):
     return dict(
         id=str(security.auth_user_id),
         username=security.auth_user_name,
-        email=security.auth_user_email,
         role=security.auth_user_role,
         created_at=security.auth_user_created_at,
         modified_at=security.auth_user_modified_at,
         is_active=security.auth_user_is_active,
-        address=security.auth_user_address
     )
 
 @auth_router.post("/refresh", status_code=status.HTTP_200_OK)
