@@ -38,22 +38,22 @@ class AuthService:
             )
         userdata = UserFromDB.model_validate(user_from_db).model_dump(exclude={"email", "firstname", "lastname", "image", "address"})
         access_token = access_security.create_access_token(
-            subject=jsonable_encoder(userdata), expires_delta=access_token_exp
+            subject=jsonable_encoder(userdata)
         )
         refresh_token = refresh_security.create_refresh_token(
             subject=jsonable_encoder(userdata), expires_delta=refresh_token_exp
             )
-        access_security.set_access_cookie(response, access_token)
-        refresh_security.set_refresh_cookie(response, refresh_token)
+        response.set_cookie(key="access_token_cookie", value=access_token, httponly=True, samesite="None", secure=True, expires=access_token_exp )
+        response.set_cookie(key="refresh_token_cookie", value=refresh_token, httponly=True, samesite="None", secure=True, expires=refresh_token_exp )
 
         return {"access_token": access_token, "refresh_token": refresh_token}
     
     def refresh_access_token(self, response: Response, refresh: RefreshCredentials):
         access_token = access_security.create_access_token(subject=refresh.subject)
-        refresh_token = refresh_security.create_refresh_token(subject=refresh.subject, expires_delta=refresh_token_exp)
+        refresh_token = refresh_security.create_refresh_token(subject=refresh.subject)
   
-        access_security.set_access_cookie(response, access_token)
-        refresh_security.set_refresh_cookie(response, refresh_token)
+        response.set_cookie(key="access_token_cookie", value=access_token, httponly=True, samesite="None", secure=True, expires=access_token_exp )
+        response.set_cookie(key="refresh_token_cookie", value=refresh_token, httponly=True, samesite="None", secure=True, expires=refresh_token_exp )
   
         return {"access_token": access_token, "refresh_token": refresh_token}
 
