@@ -9,6 +9,7 @@ async def send_account_verification_email(user: PrivateUserFromDB, background_ta
     context_string = f"{user.hash_password}{user.created_at.strftime('%d/%m/%Y,%H:%M:%S')}-verify" 
     token = AuthService.get_password_hash(context_string)
     activate_url = f"{FRONTEND_HOST}/auth/verify?token={token}&email={user.email}"
+    print(activate_url)
     data = {
         "app_name": APP_TITLE,
         "name": user.username,
@@ -28,6 +29,7 @@ async def send_reset_password_email(user: PrivateUserFromDB, background_tasks: B
     context_string = f"{user.hash_password}{user.modified_at.strftime('%d/%m/%Y,%H:%M:%S')}-reset-password" 
     token = AuthService.get_password_hash(context_string)
     reset_password_url = f"{FRONTEND_HOST}/auth/reset-password?token={token}&email={user.email}"
+    print(reset_password_url)
     data = {
         "app_name": APP_TITLE,
         "name": user.username,

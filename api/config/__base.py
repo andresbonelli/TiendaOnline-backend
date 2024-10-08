@@ -11,7 +11,9 @@ __all__ = ["MONGODB_URI",
            "MAIL_FROM",
            "MAIL_PORT",
            "MAIL_SERVER",
-           "APP_TITLE"]
+           "APP_TITLE",
+           "API_ENV"
+           ]
 
 import logging
 import os
@@ -22,6 +24,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 APP_TITLE = "Devlights Bootcamp 3.0 - Proyecto Final"
+
+API_ENV = os.getenv("API_ENV")
 
 MONGODB_URI = os.getenv("MONGODB_CONNECTION_STRING")
 if not MONGODB_URI:

@@ -32,7 +32,7 @@ class Address(BaseModel):
     address_street_name: str | None = None
     address_city: str | None = None
     address_state: str | None = None
-    address_country_code: CountryCode | None = None
+    address_country_code: str | None = None
     address_postal_code: str | None = None
     
 class BaseUser(BaseModel):

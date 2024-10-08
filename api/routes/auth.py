@@ -36,7 +36,7 @@ async def register(
     result = users.create_one(user, hash_password)
     if new_user := users.get_one(id=result.inserted_id, with_password=True):
         print(f"user created with id: {new_user.id}")
-        # await send_account_verification_email(user=new_user, background_tasks=background_tasks)
+        await send_account_verification_email(user=new_user, background_tasks=background_tasks)
     else:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -51,7 +51,11 @@ async def verify_user_account(
     auth: AuthServiceDependency,
 ):
     user_from_db = users.get_one(email=verify_request.email, with_password=True)
-    
+    if not user_from_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
     if user_from_db.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -159,16 +163,13 @@ async def user_reset_password(
         
     context_string = f"{user_from_db.hash_password}{user_from_db.modified_at.strftime('%d/%m/%Y,%H:%M:%S')}-reset-password" 
     try:
-        if auth.verify_password(context_string, verify_request.token):
-            return users.update_password(
-                user_from_db.id,
-                auth.get_password_hash(verify_request.new_password)
-                )
-        else:
-            raise HTTPException(
+        if not auth.verify_password(context_string, verify_request.token):
+             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Link expired or invalid"
             )
+        users.update_password(user_from_db.id, auth.get_password_hash(verify_request.new_password))
+        return JSONResponse({"message": "New password set!"})
     except UnknownHashError:
         raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

@@ -4,12 +4,11 @@ from fastapi import Depends, HTTPException, Response, Security, status
 from fastapi_jwt import JwtAccessBearerCookie, JwtAuthorizationCredentials, JwtRefreshBearer
 from fastapi.encoders import jsonable_encoder
 from passlib.context import CryptContext
-from pydantic import EmailStr
 from pydantic_mongo import PydanticObjectId
 from typing import Annotated
 from datetime import datetime
 
-from ..config import access_token_exp, refresh_token_exp, SECRET_KEY, REFRESH_KEY
+from ..config import access_token_exp, refresh_token_exp, SECRET_KEY, REFRESH_KEY, API_ENV
 from ..models import UserFromDB, Role
 
 access_security = JwtAccessBearerCookie(secret_key=SECRET_KEY, access_expires_delta=access_token_exp, auto_error=True)
@@ -28,33 +27,55 @@ class AuthService:
     def get_password_hash(password):
         return pwd_context.hash(password)
     
-    def login_and_set_access_token(
-        self, user_from_db: dict | None, password: str, response: Response
-    ):
+    def login_and_set_access_token(self, user_from_db: dict | None, password: str, response: Response):
         if not self.verify_password(password, user_from_db.get("hash_password")):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect Credentials",
             )
         userdata = UserFromDB.model_validate(user_from_db).model_dump(exclude={"email", "firstname", "lastname", "image", "address"})
-        access_token = access_security.create_access_token(
-            subject=jsonable_encoder(userdata)
+        access_token = access_security.create_access_token(subject=jsonable_encoder(userdata))
+        refresh_token = refresh_security.create_refresh_token(subject=jsonable_encoder(userdata))
+        
+        response.set_cookie(
+            key="access_token_cookie",
+            value=access_token,
+            secure=API_ENV == "production",
+            httponly=True,
+            samesite="lax",
+            expires=access_token_exp
         )
-        refresh_token = refresh_security.create_refresh_token(
-            subject=jsonable_encoder(userdata), expires_delta=refresh_token_exp
-            )
-        response.set_cookie(key="access_token_cookie", value=access_token, httponly=True, samesite="None", secure=True, expires=access_token_exp )
-        response.set_cookie(key="refresh_token_cookie", value=refresh_token, httponly=True, samesite="None", secure=True, expires=refresh_token_exp )
-
-        return {"access_token": access_token, "refresh_token": refresh_token}
-    
+        response.set_cookie(
+            key="refresh_token_cookie",
+            value=refresh_token,
+            secure=API_ENV == "production",
+            httponly=True,
+            samesite="lax",
+            expires=refresh_token_exp
+        )
+        
+        return {"access_token": access_token, "refresh_token": refresh_token}    
     def refresh_access_token(self, response: Response, refresh: RefreshCredentials):
         access_token = access_security.create_access_token(subject=refresh.subject)
         refresh_token = refresh_security.create_refresh_token(subject=refresh.subject)
   
-        response.set_cookie(key="access_token_cookie", value=access_token, httponly=True, samesite="None", secure=True, expires=access_token_exp )
-        response.set_cookie(key="refresh_token_cookie", value=refresh_token, httponly=True, samesite="None", secure=True, expires=refresh_token_exp )
-  
+        response.set_cookie(
+            key="access_token_cookie",
+            value=access_token,
+            secure=API_ENV == "production",
+            httponly=True,
+            samesite="lax",
+            expires=access_token_exp
+        )
+        response.set_cookie(
+            key="refresh_token_cookie",
+            value=refresh_token,
+            secure=API_ENV == "production",
+            httponly=True,
+            samesite="lax",
+            expires=refresh_token_exp
+        )
+    
         return {"access_token": access_token, "refresh_token": refresh_token}
 
 class SecurityService:
