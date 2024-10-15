@@ -37,7 +37,19 @@ async def get_orders_by_customer_id(id: PydanticObjectId, security: SecurityDepe
     Authenticated customer only!
     """
     security.check_user_permission(id)
-    return orders.find_from_customer_id(id)
+    user_orders = orders.find_from_customer_id(id)
+
+    if len(user_orders) > 0:
+        for order in user_orders:
+            order.products = orders.get_order_products_with_details(PydanticObjectId(order.id))
+            total_price = orders.calculate_total_price(PydanticObjectId(order.id))
+            order.total_price = total_price[0] if total_price else None
+        return [order.model_dump() for order in user_orders]
+    else:
+        raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User does not have any orders"
+            )
   
 @orders_router.get("/get_by_product/{id}")
 async def get_orders_by_product_id(id: PydanticObjectId, security: SecurityDependency, orders: OrdersServiceDependency):

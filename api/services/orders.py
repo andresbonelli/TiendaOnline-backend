@@ -47,12 +47,12 @@ class OrdersService:
     @classmethod
     def find_from_customer_id(cls, id: PydanticObjectId):
         cursor = cls.collection.find({"customer_id": id})
-        return [OrderFromDB.model_validate(order).model_dump() for order in cursor]
+        return [OrderFromDB.model_validate(order) for order in cursor]
          
     @classmethod
     def find_from_product_id(cls, id: PydanticObjectId):
         cursor = cls.collection.find({"products.product_id": id})
-        return [OrderFromDB.model_validate(order).model_dump() for order in cursor]
+        return [OrderFromDB.model_validate(order) for order in cursor]
        
     @classmethod
     def find_from_staff_id(cls, staff_id: PydanticObjectId): 

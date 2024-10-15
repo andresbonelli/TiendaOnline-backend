@@ -20,7 +20,7 @@ class CompletedOrderProduct(OrderProduct):
     image: str | None = None
 
 class BaseOrder(BaseModel):
-    products: list[OrderProduct]
+    products: list[OrderProduct] | list[CompletedOrderProduct]
     
 class OrderCreateData(BaseOrder):
     customer_id: PydanticObjectId
