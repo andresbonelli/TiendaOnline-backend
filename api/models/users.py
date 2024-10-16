@@ -6,6 +6,7 @@ __all__ = [
     "PrivateUserFromDB",
     "UserRegisterData",
     "AdminRegisterData",
+    "AdminUpdateData",
     "UserUpdateData",
     "UserVerifyRequest",
     "UserResetPasswordRequest",
@@ -60,16 +61,18 @@ class UserRegisterData(BaseUser):
     password: str 
 
 class AdminRegisterData(BaseUser):
-    role: Role = Field(default=CreationRole.STAFF)
+    role: CreationRole = Field(default=CreationRole.STAFF)
     password: str 
     is_active: bool = Field(default=True)
     
 class UserUpdateData(BaseUser):
     username: str = None
-    role: CreationRole = Field(default=CreationRole.CUSTOMER)
     email: EmailStr = None
     image: str | None = None
     is_active: bool | None = None # Switch to Field(default=True) in production
+
+class AdminUpdateData(UserUpdateData):
+    role: Role = Field(default=CreationRole.STAFF)
 
 class UserFromDB(BaseUser):
     id: PydanticObjectId = Field(validation_alias=AliasChoices("_id", "id"))

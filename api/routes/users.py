@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic_mongo import PydanticObjectId
 
-from ..models import UserUpdateData, AdminRegisterData
+from ..models import UserUpdateData, AdminRegisterData, AdminUpdateData
 from ..services import UsersServiceDependency, AuthServiceDependency, SecurityDependency
 from ..__common_deps import QueryParamsDependency
 
@@ -51,6 +51,19 @@ async def create_user(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content={"error": f"An unexpected error ocurred while creating order"},
             )
+
+@users_router.put("/make_admin/{id}")
+async def make_user_admin(
+    id: PydanticObjectId,
+    user: AdminUpdateData,
+    users: UsersServiceDependency,
+    security: SecurityDependency
+):
+    """
+    Admins only!
+    """
+    security.is_admin_or_raise
+    return users.update_one(id=id, user=user)
 
 @users_router.put("/{id}")
 async def update_user(

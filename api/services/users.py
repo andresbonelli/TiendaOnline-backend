@@ -9,7 +9,7 @@ from typing import Annotated
 from datetime import datetime
 
 from ..config import COLLECTIONS, db
-from ..models import UserRegisterData, PrivateUserFromDB, UserFromDB, UserUpdateData
+from ..models import UserRegisterData, PrivateUserFromDB, UserFromDB, UserUpdateData, AdminUpdateData
 from ..__common_deps import QueryParamsDependency
 
 class UsersService:
@@ -79,7 +79,7 @@ class UsersService:
         return cls.collection.insert_one(new_user) or None
 
     @classmethod
-    def update_one(cls, id: PydanticObjectId, user: UserUpdateData):
+    def update_one(cls, id: PydanticObjectId, user: UserUpdateData | AdminUpdateData):
         modified_user = user.model_dump(exclude={"password", "username", "email"}, exclude_unset=True)
         modified_user.update(modified_at=datetime.now())
 
