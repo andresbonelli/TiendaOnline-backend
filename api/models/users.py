@@ -60,7 +60,7 @@ class UserRegisterData(BaseUser):
     password: str 
 
 class AdminRegisterData(BaseUser):
-    role: CreationRole = Field(default=CreationRole.STAFF)
+    role: Role = Field(default=CreationRole.STAFF)
     password: str 
     is_active: bool = Field(default=True)
     
