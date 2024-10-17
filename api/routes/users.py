@@ -27,7 +27,7 @@ async def get_one_user_by_id(id: PydanticObjectId, users: UsersServiceDependency
     else:
         raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with id: {id} was not found."
+                detail=f"Usuario {id} no encontrado."
             )
 
 @users_router.post("/")

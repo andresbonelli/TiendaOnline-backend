@@ -57,12 +57,12 @@ class ProductsService:
             except ValidationError as e:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Validation error while fetching product: {e}"
+                    detail=f"Error de validación de producto: {e}"
                 )
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Product with id {id} not found"
+                detail=f"Producto {id} no encontrado"
             )
         
     @classmethod
@@ -76,7 +76,7 @@ class ProductsService:
         if product.sku and cls.collection.find_one({"sku": product.sku}):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Product already exists"
+                detail=f"El producto {product.sku} ya existe."
             )   
         new_product: dict = {
             **product.model_dump(),
@@ -100,7 +100,7 @@ class ProductsService:
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Product with id {id} not found"
+                detail=f"Producto {id} no encontrado"
             )
 
     @classmethod
@@ -110,7 +110,7 @@ class ProductsService:
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Product with id {id} not found"
+                detail=f"Producto {id} no encontrado"
             )
                 
     @classmethod
@@ -120,7 +120,7 @@ class ProductsService:
             if existing_product.stock < product.quantity:
                 raise HTTPException(
                         status_code=status.HTTP_409_CONFLICT,
-                        detail=f"Product {product.product_id} is out of stock"
+                        detail=f"Producto {product.product_id} sin stock"
                     )
     
     @classmethod
@@ -130,7 +130,7 @@ class ProductsService:
             if existing_product.stock < product.quantity:
                 raise HTTPException(
                         status_code=status.HTTP_409_CONFLICT,
-                        detail=f"Product {product.product_id} is out of stock"
+                        detail=f"Producto {product.product_id} sin stock"
                     )
             product_to_update = ProductUpdateData(
                 stock=existing_product.stock - product.quantity,

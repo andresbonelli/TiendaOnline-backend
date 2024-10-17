@@ -40,9 +40,10 @@ async def register(
     else:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error ocurred while retrieving new user to database."
+            detail="Un error inesperado ha ocurrido al crear tu cuenta. Lo sentimos."
         )
-    return {"message": f"User created with id: {result.inserted_id}"}
+    return {"inserted_id": result.inserted_id,
+            "message": "¡Cuenta creada! Un enlace de confirmación fue enviado a tu dirección de email para completar la verificación."}
 
 @auth_router.post("/verify", status_code=status.HTTP_200_OK)
 async def verify_user_account(
@@ -54,12 +55,12 @@ async def verify_user_account(
     if not user_from_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            detail="Usuario no encontrado"
         )
     if user_from_db.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Account already verified"
+            detail="¡La cuenta ya está verificada!"
         )
     context_time: datetime = user_from_db.modified_at or user_from_db.created_at 
     context_string = f"{user_from_db.hash_password}{context_time.strftime('%d/%m/%Y,%H:%M:%S')}-verify" 
@@ -72,12 +73,12 @@ async def verify_user_account(
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Link expired or invalid"
+                detail="Link expirado o inválido"
             )
     except UnknownHashError:
         raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Not a valid token"
+                detail="Token inválido"
             )
         
 @auth_router.post("/login", status_code=status.HTTP_200_OK)
@@ -98,7 +99,7 @@ async def login_with_cookie(
     if not user_from_db or not user_from_db.is_active:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User does not exist or inactive"
+            detail="El usuario no existe o fue desactivado"
             )
     return auth.login_and_set_access_token(
         password=user.password,
@@ -129,7 +130,7 @@ async def refresh_credentials(
     if not user_from_db or not user_from_db.is_active:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User does not exist or inactive"
+            detail="El usuario no existe o fue desactivado"
             )
     return auth.refresh_access_token(response, refresh)
 
@@ -143,7 +144,7 @@ async def user_forgot_password(
     if not user_from_db or not user_from_db.is_active:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User does not exist or inactive"
+            detail="El usuario no existe o fue desactivado"
             )
     await send_reset_password_email(user_from_db, background_tasks=background_tasks)
     return JSONResponse({"message": f"An email with password reset link has been sent to {email}"})
@@ -158,7 +159,7 @@ async def user_reset_password(
     if not user_from_db.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Account has been suspended. Please contact support"
+            detail="Tu cuenta fue suspendida. Por favor contacta a soporte técnico."
         )
         
     context_string = f"{user_from_db.hash_password}{user_from_db.modified_at.strftime('%d/%m/%Y,%H:%M:%S')}-reset-password" 
@@ -166,12 +167,12 @@ async def user_reset_password(
         if not auth.verify_password(context_string, verify_request.token):
              raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Link expired or invalid"
+                detail="Link expirado o inválido"
             )
         users.update_password(user_from_db.id, auth.get_password_hash(verify_request.new_password))
-        return JSONResponse({"message": "New password set!"})
+        return JSONResponse({"message": "¡Nueva contraseña generada!"})
     except UnknownHashError:
         raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Not a valid token"
+                detail="Token inválido"
             )

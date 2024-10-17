@@ -36,12 +36,12 @@ class OrdersService:
             except ValidationError as e:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Validation error while fetching order: {e}"
+                    detail=f"Error de validación de orden: {e}"
                 )
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Order with id {id} not found"
+                detail=f"Orden {id} no encontrada."
             )
     
     @classmethod
@@ -129,7 +129,7 @@ class OrdersService:
         else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Unexpected error while updating order"
+                detail="Error inesperado actualizando orden."
             )
     
     @classmethod

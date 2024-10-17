@@ -41,7 +41,7 @@ class UsersService:
         if all(q is None for q in (id, username, email)):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No id, username or email provided",
+                detail="No se ingresó id, email o nombre de usuario válido.",
             )
         filter = {
             "$or": [
@@ -67,7 +67,7 @@ class UsersService:
         )  
         if existing_user:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="User already exists"
+                status_code=status.HTTP_409_CONFLICT, detail="Esta cuenta ya existe."
             )
         new_user = user.model_dump(exclude={"password"}, exclude_unset=True)
         new_user.update(
@@ -92,7 +92,7 @@ class UsersService:
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with id: {id} was not found."
+                detail=f"Usuario {id} no encontrado."
             )
     
     @classmethod
@@ -106,7 +106,7 @@ class UsersService:
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with id: {id} was not found."
+                detail=f"Usuario {id} no encontrado."
             )
 
     @classmethod
@@ -117,7 +117,7 @@ class UsersService:
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with id: {id} was not found."
+                detail=f"Usuario {id} no encontrado."
             )
 
 

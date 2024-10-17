@@ -48,7 +48,7 @@ async def get_orders_by_customer_id(id: PydanticObjectId, security: SecurityDepe
     else:
         raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="User does not have any orders"
+                detail="Este usuario no tiene órdenes generadas."
             )
   
 @orders_router.get("/get_by_product/{id}")
@@ -88,7 +88,7 @@ async def create_order(
     else:
         raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Unexpected error while updating order"
+                detail="Error inesperado actualizando órden"
             )
         
 @orders_router.put("/update/{id}")
@@ -105,10 +105,10 @@ async def update_order(
     if existing_order.status != OrderStatus.pending:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot modify order {id} with status {existing_order.status}"
+            detail=f"La orden {id} con status {existing_order.status} no puede ser modificada."
         )
     result: OrderFromDB = orders.update_one(id, order)
-    return {"message": "Order modified!",
+    return {"message": "¡Orden modificada!",
             "order": result.model_dump()}
 
 @orders_router.put("/cancel/{id}", status_code=status.HTTP_200_OK)
@@ -122,7 +122,7 @@ async def cancel_order(id: PydanticObjectId, security: SecurityDependency, order
     if existing_order.status != OrderStatus.pending:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot cancel order {id} with status {existing_order.status}"
+            detail=f"La orden {id} con status {existing_order.status} no puede ser cancelada."
         )
     result: OrderFromDB = orders.update_one(id, OrderUpdateData(status=OrderStatus.cancelled))
     return {"message": "Order cancelled!",
@@ -147,13 +147,13 @@ async def complete_order(
     if existing_order.status != OrderStatus.pending:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot complete order {id} with status {existing_order.status}"
+            detail=f"La orden {id} con status {existing_order.status} no puede ser completada."
         )
     user_from_db = users.get_one(id=security.auth_user_id)
     if not user_from_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User {security.auth_user_id} not found. Account non-existent or suspended."
+            detail=f"Usuario {security.auth_user_id} no encontrado. La cuenta no existe o fue suspendida."
         )
     # Continue with order completion protocol.
     products.check_and_update_stock(existing_order.products)
@@ -172,7 +172,7 @@ async def complete_order(
         product_details=product_details,
         background_tasks=background_tasks
         )
-    return {"message": "Order succesfully fulfilled",
+    return {"message": "Orden creada existosamente.",
             "order": completed_order,
             "details": product_details}
         

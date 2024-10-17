@@ -31,7 +31,7 @@ class AuthService:
         if not self.verify_password(password, user_from_db.get("hash_password")):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect Credentials",
+                detail="Credenciales incorrectas",
             )
         userdata = UserFromDB.model_validate(user_from_db).model_dump(exclude={"email", "firstname", "lastname", "image", "address"})
         access_token = access_security.create_access_token(subject=jsonable_encoder(userdata))
@@ -114,7 +114,7 @@ class SecurityService:
         if not self.auth_user_is_active:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User account is inactive"
+                detail="Cuenta inactiva"
             )
         
     @property
@@ -123,7 +123,7 @@ class SecurityService:
         if self.auth_user_role != "admin":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User does not have admin role"
+                detail="Usuario sin permisos de administrador."
             )
 
     @property
@@ -133,7 +133,7 @@ class SecurityService:
         if role not in ["admin","staff"]:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User does not have staff role"
+                detail="Usuario sin permisos de vendedor."
             )
 
     @property
@@ -143,7 +143,7 @@ class SecurityService:
         if role not in ["admin","customer"]:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User does not have customer role"
+                detail="Solo los usuarios compradores pueden ejecutar órdenes de compra."
             )
             
     def check_user_permission(self, user_id: PydanticObjectId):
@@ -152,7 +152,7 @@ class SecurityService:
         if self.auth_user_id != user_id and role != "admin":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User does not have permission to access this item"
+                detail="Usuario no autorizado."
             )
                
 
