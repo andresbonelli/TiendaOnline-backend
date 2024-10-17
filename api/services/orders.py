@@ -57,10 +57,46 @@ class OrdersService:
     @classmethod
     def find_from_staff_id(cls, staff_id: PydanticObjectId): 
         lookup = {"$lookup": {
-            "from": "products", "as": "products_result", "localField": "products.product_id", "foreignField": "_id" 
+            "from": "products", "as": "products_info", "localField": "products.product_id", "foreignField": "_id" 
         }}
-        matches = {"$match": {"products_result.staff_id": staff_id}}
-        cursor = cls.collection.aggregate([lookup, matches])
+        matches = {"$match": {"products_info.staff_id": staff_id}}
+        # Filtering only matching staff member products:
+        projection = {
+            "$project": {
+                "products": {
+                    #  Constructs the products list in the order, containing only the product_id
+                    #  and corresponding quantity for matching products.
+                    "$map": {
+                        "input": {
+                            # Filters the products_info list to include only products with the specified staff_id
+                            "$filter": { 
+                                "input": "$products_info",
+                                "as": "product",
+                                "cond": {"$eq": ["$$product.staff_id", staff_id]}
+                            }
+                        },
+                        "as": "filtered_product",
+                        "in": {
+                            "product_id": "$$filtered_product._id",
+                            # Used to find the correct quantity for each filtered product based on its product_id.
+                            "quantity": {
+                                "$arrayElemAt": [
+                                    "$products.quantity",
+                                    {"$indexOfArray": ["$products.product_id", "$$filtered_product._id"]}
+                                ]
+                            }
+                        }
+                    }
+                },
+                "id": 1,
+                "customer_id": 1,
+                "created_at": 1,
+                "total_price": 1,
+                "status": 1,
+                "modified_at": 1
+            }
+        }
+        cursor = cls.collection.aggregate([lookup, matches, projection])
         return [OrderFromDB.model_validate(order).model_dump() for order in cursor]
     
     @classmethod
