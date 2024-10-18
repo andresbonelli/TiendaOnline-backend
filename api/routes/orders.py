@@ -41,11 +41,6 @@ async def get_orders_by_customer_id(id: PydanticObjectId, security: SecurityDepe
 
     if len(user_orders) > 0:
         return orders.find_from_customer_id(id)
-        for order in user_orders:
-            order.products = orders.get_order_products_with_details(PydanticObjectId(order.id))
-            total_price = orders.calculate_total_price(PydanticObjectId(order.id))
-            order.total_price = total_price[0] if total_price else None
-        return [order.model_dump() for order in user_orders]
     else:
         raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
