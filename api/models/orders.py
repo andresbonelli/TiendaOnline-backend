@@ -29,7 +29,7 @@ class OrderCreateData(BaseOrder):
     
 class OrderUpdateData(BaseOrder):   
     customer_id: PydanticObjectId | None = None
-    products: list[OrderProduct] | None = None
+    products: list[OrderProduct | CompletedOrderProduct] | None = None
     total_price: float | None = Field(ge=0, default=None)
     status: OrderStatus = OrderStatus.pending
 

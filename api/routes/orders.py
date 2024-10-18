@@ -40,6 +40,7 @@ async def get_orders_by_customer_id(id: PydanticObjectId, security: SecurityDepe
     user_orders = orders.find_from_customer_id(id)
 
     if len(user_orders) > 0:
+        return orders.find_from_customer_id(id)
         for order in user_orders:
             order.products = orders.get_order_products_with_details(PydanticObjectId(order.id))
             total_price = orders.calculate_total_price(PydanticObjectId(order.id))
@@ -83,7 +84,7 @@ async def create_order(
     
     result = orders.create_one(order, security.auth_user_id, products)
     if result.acknowledged:
-        return {"message": "Order succesfully created",
+        return {"message": "¡Orden creada!",
                 "inserted_id": f"{result.inserted_id}"}
     else:
         raise HTTPException(
@@ -163,6 +164,7 @@ async def complete_order(
         id,
         OrderUpdateData(
             status=OrderStatus.completed,
+            products=product_details,
             total_price=total_price[0]
         )
     )
@@ -172,8 +174,7 @@ async def complete_order(
         product_details=product_details,
         background_tasks=background_tasks
         )
-    return {"message": "Orden creada existosamente.",
-            "order": completed_order,
-            "details": product_details}
+    return {"message": "Orden completada existosamente.",
+            "order": completed_order}
         
     
