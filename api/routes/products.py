@@ -74,7 +74,7 @@ async def delete_product(id: PydanticObjectId, products: ProductsServiceDependen
     """
     Admins only!
     """
-    security.is_admin_or_raise
+    security.check_user_permission(security.auth_user_id)
     result = products.delete_one(id)
     return {"message": "Product succesfully deleted", "product": result}
   

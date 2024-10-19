@@ -45,7 +45,7 @@ async def create_user(
     result = users.create_one(user, hash_password)
     if result.acknowledged:
         return {"message": "New user succesfully created",
-                "inserted_id": f"{str(result.inserted_id)}"}
+                "inserted_id": f"{result.inserted_id}"}
     else:
         return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

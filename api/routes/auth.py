@@ -43,8 +43,8 @@ async def register(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Un error inesperado ha ocurrido al crear tu cuenta. Lo sentimos."
         )
-    return {"inserted_id": str(result.inserted_id),
-            "message": "¡Cuenta creada! Un enlace de confirmación fue enviado a tu dirección de email para completar la verificación."}
+    return {"message": "¡Cuenta creada! Un enlace de confirmación fue enviado a tu dirección de email para completar la verificación.",
+            "inserted_id": f"result.inserted_id"}
 
 @auth_router.post("/verify", status_code=status.HTTP_200_OK)
 async def verify_user_account(
