@@ -34,6 +34,7 @@ async def register(
     user.role = "customer"
     hash_password = auth.get_password_hash(user.password)
     result = users.create_one(user, hash_password)
+   
     if new_user := users.get_one(id=result.inserted_id, with_password=True):
         print(f"user created with id: {new_user.id}")
         await send_account_verification_email(user=new_user, background_tasks=background_tasks)
@@ -42,7 +43,7 @@ async def register(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Un error inesperado ha ocurrido al crear tu cuenta. Lo sentimos."
         )
-    return {"inserted_id": result.inserted_id,
+    return {"inserted_id": str(result.inserted_id),
             "message": "¡Cuenta creada! Un enlace de confirmación fue enviado a tu dirección de email para completar la verificación."}
 
 @auth_router.post("/verify", status_code=status.HTTP_200_OK)
