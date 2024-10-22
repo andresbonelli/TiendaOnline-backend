@@ -1,7 +1,7 @@
 
 <!DOCTYPE html>
 <head>
-    <title>Account Activation</title>
+    <title>Verificación de cuenta</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -30,16 +30,16 @@
 </head>
 <body>
     <div class="email-container">
-        <h1>Welcome to {{ app_name }}!</h1>
-        <p>Dear {{ name }},</p>
-        <p>Thank you for signing up. Please activate your account by clicking the link below:</p>
+        <h1>¡Bienvenido a {{ app_name }}!</h1>
+        <p>Estimado {{ name }},</p>
+        <p>Gracias por registrarte en nuestra tienda. Por favor activá tu cuenta haciendo clic en el link abajo:</p>
         <p>
-            <a href="{{ activate_url }}" class="button">Activate Account</a>
+            <a href="{{ activate_url }}" class="button">Activar cuenta</a>
         </p>
-        <p>If the button above doesn't work, please copy and paste the following URL into your browser:</p>
+        <p>Si el botón no funciona, copiá y pegá la siguiente URL en tu navegador:</p>
         <p><a href="{{ activate_url }}">{{ activate_url }}</a></p>
-        <p>Thank you for choosing us!</p>
-        <p>Best Regards,<br>{{ app_name }}</p>
+        <p>¡Gracias por elegirnos!</p>
+        <p>{{ app_name }}</p>
     </div>
 </body>
 </html>

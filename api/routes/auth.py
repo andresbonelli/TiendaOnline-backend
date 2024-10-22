@@ -43,7 +43,7 @@ async def register(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Un error inesperado ha ocurrido al crear tu cuenta. Lo sentimos."
         )
-    return {"message": "¡Cuenta creada!",
+    return {"message": "¡Cuenta creada! Revisá tu Email (también Spam). Un link de activación estará llegando en unos minutos.",
             "inserted_id": f"{result.inserted_id}"}
 
 @auth_router.post("/verify", status_code=status.HTTP_200_OK)
@@ -148,7 +148,7 @@ async def user_forgot_password(
             detail="El usuario no existe o fue desactivado"
             )
     await send_reset_password_email(user_from_db, background_tasks=background_tasks)
-    return JSONResponse({"message": f"An email with password reset link has been sent to {email}"})
+    return JSONResponse({"message": f"revisá tu Email {email} (también Spam). Un link de restablecimiento estará llegando en unos minutos."})
 
 @auth_router.put("/reset-password", status_code=status.HTTP_200_OK)
 async def user_reset_password(

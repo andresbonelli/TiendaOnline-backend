@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <head>
-    <title>Order completed</title>
+    <title>Orden Confirmada</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -44,23 +44,23 @@
 </head>
 <body>
     <div class="email-container">
-        <p>Dear {{ name }},</p>
-        <p>Thank you for completing your purchase.</p>
-        <p>Your order details are:</p>
+        <p>Estimado {{ name }},</p>
+        <p>Gracias por tu compra.</p>
+        <p>Estos son los detalles de tu orden:</p>
         <ul>
             {% for product in products %}
             <li><strong>{{ product.name }}</strong>
                 <br><img src="{{ product.image }}" alt="{{ product.name }}" class="product-img"/>
-                <br>price: {{ product.price }}
-                <br>quantity: {{ product.quantity }}</li>
+                <br>precio: {{ product.price }}
+                <br>cantidad: {{ product.quantity }}</li>
             {% endfor %}
         </ul>
-        <p><strong>TOTAL PRICE: {{ order.total_price }}</strong></p>
+        <p><strong>PRECIO TOTAL: {{ order.total_price }}</strong></p>
         <p>
-            <a href="{{ tracking_url }}" target="_blank" class="button">Track your order</a>
+            <a href="{{ tracking_url }}" target="_blank" class="button">Seguir envío</a>
         </p>
-        <p>Thank you for choosing us!</p>
-        <p>Best Regards,<br>{{ app_name }}</p>
+        <p>¡Gracias por elegirnos!</p>
+        <p>{{ app_name }}</p>
     </div>
 </body>
 </html>
