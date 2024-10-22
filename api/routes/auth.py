@@ -67,9 +67,13 @@ async def verify_user_account(
     context_string = f"{user_from_db.hash_password}{context_time.strftime('%d/%m/%Y,%H:%M:%S')}-verify" 
     try:
         if auth.verify_password(context_string, verify_request.token):
-            return users.update_one(
+            if users.update_one(
                 user_from_db.id,
                 UserUpdateData(is_active=True)
+                ):
+                return JSONResponse(
+                    status_code=status.HTTP_200_OK,
+                    content={"message": "¡Cuenta verificada! Ya puedes iniciar sesión."}
                 )
         else:
             raise HTTPException(
