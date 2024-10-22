@@ -13,6 +13,7 @@ pydantic-mongo = "^2.3.0"
 fastapi-jwt = {extras = ["authlib"], version = "^0.3.0"}
 passlib = { extras = ["bcrypt"], version = "^1.7.4" }
 fastapi-mail = "^1.4.1"
+resend = "^2.4.0"
 
 
 [build-system]

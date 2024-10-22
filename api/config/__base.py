@@ -12,7 +12,8 @@ __all__ = ["MONGODB_URI",
            "MAIL_PORT",
            "MAIL_SERVER",
            "APP_TITLE",
-           "API_ENV"
+           "API_ENV",
+           "RESEND_API_KEY"
            ]
 
 import logging
@@ -48,6 +49,7 @@ MAIL_PASSWORD=os.getenv("MAIL_PASSWORD", "")
 MAIL_FROM=os.getenv("MAIL_FROM", "")
 MAIL_PORT=int(os.getenv("MAIL_PORT", "1025"))
 MAIL_SERVER=os.getenv("MAIL_SERVER", "smtp")
+RESEND_API_KEY=os.getenv("RESEND_API_KEY", "")
 
 
 logger = logging.getLogger("uvicorn")

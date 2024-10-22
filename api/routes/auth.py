@@ -44,7 +44,7 @@ async def register(
             detail="Un error inesperado ha ocurrido al crear tu cuenta. Lo sentimos."
         )
     return {"message": "¡Cuenta creada!",
-            "inserted_id": f"result.inserted_id"}
+            "inserted_id": f"{result.inserted_id}"}
 
 @auth_router.post("/verify", status_code=status.HTTP_200_OK)
 async def verify_user_account(

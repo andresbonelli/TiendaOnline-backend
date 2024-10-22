@@ -5,7 +5,7 @@ from fastapi.background import BackgroundTasks
 from typing import List
 from pathlib import Path
 
-from .__base import APP_TITLE, MAIL_FROM, MAIL_PASSWORD, MAIL_PORT, MAIL_SERVER, MAIL_USERNAME
+from .__base import APP_TITLE, MAIL_FROM, MAIL_PASSWORD, MAIL_PORT, MAIL_SERVER, MAIL_USERNAME, RESEND_API_KEY
 
 conf = ConnectionConfig(
     MAIL_USERNAME = MAIL_USERNAME,
@@ -38,3 +38,5 @@ async def send_email(
     )
     
     background_tasks.add_task(fm.send_message, message, template_name=template_name)
+
+
