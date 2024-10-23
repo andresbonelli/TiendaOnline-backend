@@ -38,7 +38,7 @@ cd proyecto_final_backend
 ```bash
 poetry install
 ```
-4. Crear archivo `.env` y popular las variables de entorno necesarias (ver `.env.example`)
+4. Crear archivo `.env` y poblar las variables de entorno necesarias (ver `.env.example`)
 
 ```bash
 touch '.env'
@@ -46,10 +46,23 @@ touch '.env'
 ```bash
 echo '.env' >> .gitignore
 ```
-6. Ejecutar modo de desarrollo.
-
+6. (opcional) Generar un usuario administrador general (ver ejemplo en `scripts/ADMIN_USER_CONF.example`) 
+```bash
+cd scripts && touch '.ADMIN_USER_CONF'
+```
+(añadir al archivo las variables de 'USERNAME', 'EMAIL' y 'PASSWORD' personalizadas)
+```bash
+python -m scripts.create_super_user
+```
+```bash
+echo '.ADMIN_USER_CONF' >> .gitignore
+```
+8. Ejecutar modo de desarrollo.
+   
 ```bash
 fastapi dev
 ```
 > Navegar a la documentación expuesta en [http://localhost:8000/docs](http://localhost:8000/docs)
+
+## Despliegue demo: https://vocal-nelie-andresbonelli-1d085aa1.koyeb.app/docs#/
 
