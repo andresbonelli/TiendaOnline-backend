@@ -10,6 +10,7 @@ __pycache__
 # Script files
 seed_test*.*
 seed_database*.*
+update_categories.py
 
 # Deployment and testing
 .vercel

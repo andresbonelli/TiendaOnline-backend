@@ -12,14 +12,11 @@ class Size(str, Enum):
     XXXLARGE = "3xl"
     
 class Category(str, Enum):
-    ELECTRONICS = "electronics"
-    GROCERY = "grocery"
-    SPORTS  = "sports"
-    HOME_APPLIANCES = "home_appliances"
-    CLOTHING = "clothing"
-    GAMES = "games"
-    OFFICE = "office"
-    AUTOMOTIVE = "automotive"
+    ELECTRONICA = "electronica"
+    INDUMENTARIA = "indumentaria"
+    ACCESORIOS = "accesorios"
+    CALZADO = "zapatos"
+    PERFUMERIA = "perfumeria"
 
 class CountryCode(list[str, str], Enum):
     AFGHANISTAN = ["AFG", "004"]
