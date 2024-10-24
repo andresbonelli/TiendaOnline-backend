@@ -11,6 +11,7 @@ __pycache__
 seed_test*.*
 seed_database*.*
 update_categories.py
+make_all_orders_pending.py
 
 # Deployment and testing
 .vercel
