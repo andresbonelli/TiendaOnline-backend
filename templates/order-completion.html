@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<head>
+    <title>Orden Confirmada</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+        .email-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .logo {
+            max-width: 150px;
+            margin-bottom: 16px;
+        }
+        .button {
+            color: #fff;
+            background-color: #007BFF;
+            border-color: #007BFF;
+            border-radius: .25rem;
+            text-decoration: none;
+            padding: .375rem .75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+         .product-img {
+            width: 100px;
+            height: auto;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        ul {
+            padding: 0;
+            list-style-type: none;
+        }
+        li {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <p>Estimado {{ name }},</p>
+        <p>Gracias por tu compra.</p>
+        <p>Estos son los detalles de tu orden:</p>
+        <ul>
+            {% for product in products %}
+            <li><strong>{{ product.name }}</strong>
+                <br><img src="{{ product.image }}" alt="{{ product.name }}" class="product-img"/>
+                <br>precio: {{ product.price }}
+                <br>cantidad: {{ product.quantity }}</li>
+            {% endfor %}
+        </ul>
+        <p><strong>PRECIO TOTAL: {{ order.total_price }}</strong></p>
+        <p>
+            <a href="{{ tracking_url }}" target="_blank" class="button">Seguir envío</a>
+        </p>
+        <p>¡Gracias por elegirnos!</p>
+        <p>{{ app_name }}</p>
+    </div>
+</body>
+</html>

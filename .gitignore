@@ -1,4 +1,17 @@
+# Secrets and env variables
 .env
 .venv
+ADMIN_USER_CONF
+
+# Python cache files
 __pycache__
 .pytest_cache
+
+# Script files
+seed_test*.*
+seed_database*.*
+update_categories.py
+make_all_orders_pending.py
+
+# Deployment and testing
+.vercel

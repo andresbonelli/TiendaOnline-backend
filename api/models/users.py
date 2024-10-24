@@ -1,58 +1,88 @@
-
 __all__ = [
+    "Role",
     "BaseUser",
-    "LoginUser",
+    "UserLoginData",
     "UserFromDB",
-    "UserFromDBWithHash",
-    "CreationUser",
+    "PrivateUserFromDB",
+    "UserRegisterData",
+    "AdminRegisterData",
+    "AdminUpdateData",
+    "UserUpdateData",
+    "UserVerifyRequest",
+    "UserResetPasswordRequest",
 ]
 
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, AliasChoices
 from pydantic_mongo import PydanticObjectId
-from typing import List, Optional
 from datetime import datetime
 from enum import Enum
+
+from ..config import CountryCode
+
+class CreationRole(str, Enum):
+    CUSTOMER = "customer"
+    STAFF = "staff"
 
 class Role(str, Enum):
     ADMIN = "admin"
     CUSTOMER = "customer"
     STAFF = "staff"
 
-class Adress(BaseModel):
-    adress_street_no: Optional[str] = None
-    adress_street_name: Optional[str] = None
-    adress_city: Optional[str] = None
-    adress_state: Optional[str] = None
-    adress_country_code: Optional[str] = None #Enum?
-    adress_postal_code: Optional[str] = None
+class Address(BaseModel):
+    address_street_no: str | None = None
+    address_street_name: str | None = None
+    address_city: str | None = None
+    address_state: str | None = None
+    address_country_code: str | None = None
+    address_postal_code: str | None = None
     
 class BaseUser(BaseModel):
     username: str
-    firstname: Optional[str] = None
-    lastname: Optional[str] = None
-    role: Role = Field(default=Role.ADMIN)
+    role: Role = Field(default=Role.CUSTOMER)
     email: EmailStr
-    image: Optional[str] = None
-    address: Optional[List[Adress]] = None
-    created_at: datetime = Field(default_factory=datetime.now)
-    
-    class Config:
-        json_encoders = {
-            datetime: lambda dt: dt.isoformat(),
-        }
-    
-    
-class LoginUser(BaseModel):
-    username: str
-    password: str
+    firstname: str | None = None
+    lastname: str | None = None
+    image: str | None = None
+    address: list[Address] | None = None   
 
-class CreationUser(BaseUser):
+class UserLoginData(BaseModel):
+    input: str | EmailStr
     password: str
     
+class UserVerifyRequest(BaseModel):
+    token: str
+    email: EmailStr
+
+class UserResetPasswordRequest(UserVerifyRequest):
+    new_password: str
+    
+class UserRegisterData(BaseUser):
+    role: CreationRole = Field(default=CreationRole.CUSTOMER)
+    password: str 
+
+class AdminRegisterData(BaseUser):
+    role: CreationRole = Field(default=CreationRole.STAFF)
+    password: str 
+    is_active: bool = Field(default=True)
+    
+class UserUpdateData(BaseUser):
+    username: str = None
+    email: EmailStr = None
+    image: str | None = None
+    is_active: bool | None = None # Switch to Field(default=True) in production
+
+class AdminUpdateData(UserUpdateData):
+    role: Role = Field(default=CreationRole.STAFF)
+
 class UserFromDB(BaseUser):
-    id: PydanticObjectId
-   
-class UserFromDBWithHash(BaseUser):
-    id: PydanticObjectId = Field(alias="_id")
+    id: PydanticObjectId = Field(validation_alias=AliasChoices("_id", "id"))
+    is_active: bool | None = None # Switch to required in production
+    created_at: datetime
+    modified_at: datetime | None = None
+    
+class PrivateUserFromDB(UserFromDB):
     hash_password: str
+
+   
+
   
