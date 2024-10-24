@@ -15,7 +15,7 @@ class Category(str, Enum):
     ELECTRONICA = "electronica"
     INDUMENTARIA = "indumentaria"
     ACCESORIOS = "accesorios"
-    CALZADO = "zapatos"
+    CALZADO = "calzado"
     PERFUMERIA = "perfumeria"
 
 class CountryCode(list[str, str], Enum):
