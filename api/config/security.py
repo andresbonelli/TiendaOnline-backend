@@ -8,7 +8,6 @@ access_token_exp = timedelta(minutes=60)
 refresh_token_exp = timedelta(days=1)
 
 allowed_origins = [
-    "*",
     f"http://{HOST_URL}",
     f"http://{HOST_URL}:{HOST_PORT}",
     f"http://{FRONTEND_HOST}",
