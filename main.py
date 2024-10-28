@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 
 from .api.config import allowed_origins, APP_TITLE
-from .api.routes import api_router, auth_router 
+from .api.routes import api_router, auth_router
 
 app = FastAPI(title=APP_TITLE)
 
@@ -17,7 +17,7 @@ app.include_router(auth_router)
 # Set up CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[*allowed_origins,"http://localhost:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -26,17 +26,15 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+
 @app.get("/", include_in_schema=False)
 def home(request: Request):
     return templates.TemplateResponse(
-        name="index.html",
-        request=request,
-        context=dict(
-            title=APP_TITLE
-        )
+        name="index.html", request=request, context=dict(title=APP_TITLE)
     )
 
-# logging.basicConfig(level=logging.DEBUG) 
+
+# logging.basicConfig(level=logging.DEBUG)
 @app.middleware("http")
 async def log_request_data(request: Request, call_next):
     # Log incoming request details
@@ -51,5 +49,3 @@ async def log_request_data(request: Request, call_next):
     # Log outgoing response details
     logging.info(f"Response status: {response.status_code}")
     return response
-    
-
