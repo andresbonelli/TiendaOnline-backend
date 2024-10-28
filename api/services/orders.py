@@ -7,7 +7,7 @@ from typing import Annotated
 from datetime import datetime
 
 from ..__common_deps import QueryParamsDependency
-from ..services import ProductsServiceDependency, UsersServiceDependency
+from ..services import ProductsServiceDependency
 from ..config import COLLECTIONS, db
 from ..models import (
     BaseOrder,
