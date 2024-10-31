@@ -4,7 +4,7 @@ from pydantic_mongo import PydanticObjectId
 import uuid
 import os
 
-from ..config import HOST_URL
+from ..config import PUBLIC_HOST_URL
 from ..models import UserUpdateData, AdminRegisterData, AdminUpdateData
 from ..services import UsersServiceDependency, AuthServiceDependency, SecurityDependency
 from ..__common_deps import QueryParamsDependency
@@ -117,8 +117,9 @@ async def upload_user_image(
     file_path = os.path.join(save_directory, image_name)
     with open(file_path, "wb") as f:
         f.write(file_content)
-    updated_user = UserUpdateData(image=f"{HOST_URL}/images/users/{image_name}")
+    updated_user = UserUpdateData(image=f"{PUBLIC_HOST_URL}/images/users/{image_name}")
     return users.update_one(id=id, user=updated_user)
+
 
 @users_router.delete("/{id}")
 async def delete_user(
