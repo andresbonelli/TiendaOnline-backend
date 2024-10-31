@@ -117,7 +117,9 @@ async def upload_user_image(
     file_path = os.path.join(save_directory, image_name)
     with open(file_path, "wb") as f:
         f.write(file_content)
-    updated_user = UserUpdateData(image=f"{PUBLIC_HOST_URL}/images/users/{image_name}")
+    updated_user = UserUpdateData(
+        image=f"{PUBLIC_HOST_URL}/static/images/users/{image_name}"
+    )
     return users.update_one(id=id, user=updated_user)
 
 
