@@ -120,13 +120,22 @@ async def upload_product_image(
     with open(file_path, "wb") as f:
         f.write(file_content)
     # Destructure Product details to avoid ovewriting
-    existing_product_details = ProductDetails.model_dump(existing_product.details)
+    existing_product_details = (
+        ProductDetails.model_dump(existing_product.details)
+        if existing_product.details
+        else {}
+    )
+    existing_product_details["image_list"] = (
+        existing_product.details.image_list
+        if "image_list" in existing_product_details
+        else []
+    )
     image_url = f"{PUBLIC_HOST_URL}/static/images/products/{id}/{image_name}"
     updated_product = ProductUpdateData(
         image=image_url,
         details={
             **existing_product_details,
-            "image_list": [*existing_product.details.image_list, image_url],
+            "image_list": [*existing_product_details["image_list"], image_url],
         },
     )
     return products.update_one(id=id, product=updated_product)
