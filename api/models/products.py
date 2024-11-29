@@ -1,10 +1,11 @@
 __all__ = [
     "BaseProduct",
+    "ProductDetails",
     "ProductCreateData",
     "ProductUpdateData",
     "ProductFromDB",
-    "DeletedProductFromDB"
-    ]
+    "DeletedProductFromDB",
+]
 
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
@@ -17,6 +18,7 @@ class ProductDetails(BaseModel):
     sizes: list[Size] | None = None
     long_description: str | None = None
 
+
 class BaseProduct(BaseModel):
     name: str
     description: str
@@ -25,14 +27,16 @@ class BaseProduct(BaseModel):
     stock: int = Field(ge=0)
     sku: str | None = None
     image: str | None = None
-    category: Category | None = None 
+    category: Category | None = None
     details: ProductDetails | None = None
     tags: list[str] | None = None
+
 
 class ProductCreateData(BaseProduct):
     staff_id: PydanticObjectId
     created_at: datetime = Field(default_factory=datetime.now)
-    
+
+
 class ProductUpdateData(BaseProduct):
     name: str | None = None
     description: str | None = None
@@ -40,20 +44,14 @@ class ProductUpdateData(BaseProduct):
     stock: int | None = Field(ge=0, default=None)
     sales_count: int | None = Field(ge=0, default=None)
 
+
 class ProductFromDB(BaseProduct):
     id: PydanticObjectId = Field(alias="_id")
     staff_id: PydanticObjectId
     sales_count: int | None = None
     created_at: datetime
     modified_at: datetime | None = None
-    
+
+
 class DeletedProductFromDB(ProductFromDB):
     deleted_at: datetime
-    
-    
-    
-
-    
-
-    
-    
