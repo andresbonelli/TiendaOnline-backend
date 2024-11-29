@@ -1,11 +1,14 @@
 __all__ = ["products_router"]
 
-from fastapi import status, Response
+from fastapi import File, UploadFile, status, Response
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from pydantic_mongo import PydanticObjectId
+import os
+import uuid
 
-from ..models import BaseProduct, ProductUpdateData
+from ..config import PUBLIC_HOST_URL
+from ..models import BaseProduct, ProductUpdateData, ProductDetails
 from ..services import ProductsServiceDependency, SecurityDependency
 from ..__common_deps import QueryParamsDependency, SearchEngineDependency
 
@@ -93,6 +96,40 @@ async def update_product(
     security.check_user_permission(existing_product.staff_id)
     result = products.update_one(id, product)
     return {"message": "Product succesfully updated", "product": result}
+
+
+@products_router.post("/upload_image/{id}")
+async def upload_product_image(
+    id: PydanticObjectId,
+    products: ProductsServiceDependency,
+    security: SecurityDependency,
+    file: UploadFile = File(...),
+):
+    """
+    Authenticaded staff members and admins only!
+    """
+    existing_product = products.get_one(id)
+    security.check_user_permission(existing_product.staff_id)
+    image_name = f"{uuid.uuid4()}.jpg"
+    save_directory = os.path.join(
+        os.path.dirname(__file__), "..", "..", "static", "images", "products", str(id)
+    )
+    os.makedirs(save_directory, exist_ok=True)
+    file_content = await file.read()
+    file_path = os.path.join(save_directory, image_name)
+    with open(file_path, "wb") as f:
+        f.write(file_content)
+    # Destructure Product details to avoid ovewriting
+    existing_product_details = ProductDetails.model_dump(existing_product.details)
+    image_url = f"{PUBLIC_HOST_URL}/static/images/products/{id}/{image_name}"
+    updated_product = ProductUpdateData(
+        image=image_url,
+        details={
+            **existing_product_details,
+            "image_list": [*existing_product.details.image_list, image_url],
+        },
+    )
+    return products.update_one(id=id, product=updated_product)
 
 
 @products_router.delete("/{id}", status_code=status.HTTP_202_ACCEPTED)
