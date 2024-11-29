@@ -19,7 +19,7 @@ La aplicación expone la API principal del eCommerce que interactúa con una bas
 
 ## Requisitos
 - Python 3.12
-- MongoDB (conexión URI local o remota)
+- MongoDB (de preferencia MongoDB Atlas remoto para permitir funcionalidad de índice de búsqueda)
 - Dependencias del proyecto (ver `requirements.txt`)
 
 ## Intalación
