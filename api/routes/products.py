@@ -127,8 +127,8 @@ async def upload_product_image(
     )
     existing_product_details["image_list"] = (
         existing_product.details.image_list
-        if "image_list" in existing_product_details
-        else []
+        if "details" in existing_product and "image_list" in existing_product.details
+        else [existing_product.image] if existing_product.image else []
     )
     image_url = f"{PUBLIC_HOST_URL}/static/images/products/{id}/{image_name}"
     updated_product = ProductUpdateData(
